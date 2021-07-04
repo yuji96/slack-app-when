@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+slack-bolt = "*"
+coloredlogs = "*"
+
+[dev-packages]
+python-dotenv = "*"
+
+[requires]
+python_version = "3.9"
+
+[scripts]
+server = "ngrok http 3000"
