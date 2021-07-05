@@ -1,0 +1,21 @@
+{
+  "type": "modal",
+  "callback_id": "test",
+  "title": {
+    "type": "plain_text",
+    "text": "ヘルプデスク申請"
+  },
+  "close": {
+    "type": "plain_text",
+    "text": "閉じる"
+  },
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": ":wave: 申請カテゴリを選んでください。"
+      }
+    }
+  ]
+}
