@@ -19,7 +19,11 @@ $ which python
 ```
 
 ## run
+[`ngrok`](https://ngrok.com/download)をダウンロード後に，`ngrok`を`/usr/local/bin/`に移動する．
+
 ```zsh
 pipenv run server
 python src/app.py
 ```
+`ngrok`は毎回ランダムなURLを発行するので、その都度 Slack App の設定を更新しないといけない．
+複数人が同時に開発しているときは，そのうちの1人が設定する．
