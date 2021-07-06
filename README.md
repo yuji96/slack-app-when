@@ -12,8 +12,11 @@ $ pipenv shell
 $ which python
 ~/.local/share/virtualenvs/<your-python-path>/bin/python
 ```
-2. `setting.json`にパスを追加する．
-
+2. vscodeの設定ファイルを作成する．
+```zsh
+$ touch .vscode/settings.json
+```
+3. `settings.json`にpythonのパスを設定する．
 ```json
 "python.pythonPath": "~/.local/share/virtualenvs/<your-python-path>/bin/python",
 ```
