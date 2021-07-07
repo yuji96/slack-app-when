@@ -1,16 +1,14 @@
 import datetime as dt
-from logging import getLogger
-
-import coloredlogs
+import re
 
 from blocks import read_json
+from settings import set_logger
 
 
-logger = getLogger(__name__)
-logger.setLevel("INFO")
-coloredlogs.install(level="INFO", logger=logger)
+logger = set_logger(__name__)
 
 
+# TODO: チュートリアルの関数なので将来的に削除する
 def update_home_tab(client, event, logger):
     logger.info("open")
     blocks = read_json("home.json")
