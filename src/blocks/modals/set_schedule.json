@@ -1,0 +1,163 @@
+{
+	"type": "modal",
+	"callback_id": "set-schedule",
+	"title": {
+	  "type": "plain_text",
+	  "text": "時間調整"
+	},
+	"submit": {
+		"type": "plain_text",
+		"text": "設定する",
+		"emoji": true
+	},
+	"close": {
+		"type": "plain_text",
+		"text": "閉じる",
+		"emoji": true
+	},
+	"blocks": [
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "開催したい日程",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この日から"
+			},
+			"accessory": {
+				"type": "datepicker",
+				"initial_date": "Today",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select a date",
+					"emoji": true
+				},
+				"action_id": "datepicker-action"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この日までの間に開催したい"
+			},
+			"accessory": {
+				"type": "datepicker",
+				"initial_date": "1990-04-28",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select a date",
+					"emoji": true
+				},
+				"action_id": "datepicker-action"
+			}
+		},
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "開催可能な時間帯",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この時刻から"
+			},
+			"accessory": {
+				"type": "timepicker",
+				"initial_time": "06:00",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select time",
+					"emoji": true
+				},
+				"action_id": "timepicker-action"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この時刻の間のどこかで開催したい"
+			},
+			"accessory": {
+				"type": "timepicker",
+				"initial_time": "23:00",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select time",
+					"emoji": true
+				},
+				"action_id": "timepicker-action"
+			}
+		},
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "回答者",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": " "
+			},
+			"accessory": {
+				"type": "multi_conversations_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select conversations",
+					"emoji": true
+				},
+				"action_id": "multi_conversations_select-action"
+			}
+		},
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "回答の公開範囲",
+				"emoji": true
+			}
+		},
+		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "radio_buttons",
+					"options": [
+						{
+							"text": {
+								"type": "plain_text",
+								"text": "主催者だけに回答を送る",
+								"emoji": true
+							},
+							"value": "value-0"
+						},
+						{
+							"text": {
+								"type": "plain_text",
+								"text": "チャンネルに全員の回答を公開する",
+								"emoji": true
+							},
+							"value": "value-1"
+						}
+					],
+					"action_id": "result-option"
+				}
+			]
+		}
+	]
+  }

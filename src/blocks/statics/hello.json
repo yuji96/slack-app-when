@@ -1,0 +1,9 @@
+[
+    {
+        "type": "section", 
+        "text": {
+            "type": "plain_text", 
+            "text": "Hello world"
+        }
+    }
+]
