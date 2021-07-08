@@ -1,6 +1,7 @@
 from slack_bolt import App
 
 import for_manager
+import manager
 import for_paticipants
 import settings
 from settings import set_logger
@@ -13,6 +14,7 @@ app = App(
     logger=logger,
 )
 
-for_manager.register(app)
+#for_manager.register(app)
+manager.register(app)
 for_paticipants.register(app)
 app.start(port=settings.PORT)
