@@ -1,6 +1,6 @@
 {
 	"type": "modal",
-	"callback_id": "set-schedules",
+	"callback_id": "set-schedules-public-channel",
 	"title": {
 	  "type": "plain_text",
 	  "text": "時間調整"
@@ -101,27 +101,37 @@
 			}
 		},
 		{
-			"type": "header",
-			"text": {
+			"type": "input",
+			"label": {
 				"type": "plain_text",
 				"text": "回答者",
 				"emoji": true
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": " "
 			},
-			"accessory": {
-				"type": "multi_conversations_select",
+			"element": {
+				"type": "static_select",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "Select conversations",
+					"text": "Select an item",
 					"emoji": true
 				},
-				"action_id": "multi_conversations_select-action"
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "チャンネル1",
+							"emoji": true
+						},
+						"value": "チャンネル1"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "チャンネル2",
+							"emoji": true
+						},
+						"value": "チャンネル2"
+					}
+				]
 			}
 		},
 		{

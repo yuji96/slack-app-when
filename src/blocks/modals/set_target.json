@@ -1,0 +1,51 @@
+{
+	"title": {
+		"type": "plain_text",
+		"text": "調整の申請"
+	},
+	"submit": {
+		"type": "plain_text",
+		"text": "Submit"
+	},
+	"type": "modal",
+	"callback_id": "schedule-request",
+	"close": {
+		"type": "plain_text",
+		"text": "閉じる"
+	},
+	"blocks": [
+		{
+			"type": "input",
+			"label": {
+				"type": "plain_text",
+				"text": "申請カテゴリを選んでください。",
+				"emoji": true
+			},
+			"element": {
+				"type": "static_select",
+				"action_id": "target-select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select an item",
+					"emoji": true
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "個人"
+						},
+						"value": "im"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "チャンネル"
+						},
+						"value": "public_channel"
+					}
+				]
+			}
+		}
+	]
+}

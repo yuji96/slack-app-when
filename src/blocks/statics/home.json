@@ -13,7 +13,7 @@
         "emoji": true
       },
       "value": "click_me_123",
-      "action_id": "set-schedules"
+      "action_id": "schedule-request"
     }
   }
 ]
