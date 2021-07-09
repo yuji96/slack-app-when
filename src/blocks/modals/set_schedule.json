@@ -1,6 +1,6 @@
 {
 	"type": "modal",
-	"callback_id": "set-schedule",
+	"callback_id": "set-schedules",
 	"title": {
 	  "type": "plain_text",
 	  "text": "時間調整"
