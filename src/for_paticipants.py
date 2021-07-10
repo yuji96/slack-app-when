@@ -100,8 +100,8 @@ class Table:
         for s, e in self.slots:
             single[s:e] = True
 
-        stack = pd.Series(single.values, index=[index.date, index.time])
-        table = stack.unstack().loc[:, start.time():end.time()]
+        single.set_axis([index.date, index.time], axis="index", inplace=True)
+        table = single.unstack().loc[:, start.time():end.time()]
         return table.astype(bool)
 
     def visualize(self):
