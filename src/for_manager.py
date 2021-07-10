@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from blocks import read_json
 from settings import set_logger
 
+# TODO: デバッグ用で開発後には削除する    
+from pprint import pprint
 
 logger = set_logger(__name__)
 
@@ -57,29 +59,49 @@ def update_schedule(ack: Ack, body: dict, client: WebClient):
 def check_users(ack: Ack, body: dict, client: WebClient, view: dict):
     """日程調整用 Modal の提出を処理する．"""
 
-    users_list = view["state"]["values"]["users_select"]["multi_users_select-action"]["selected_users"]
+    modal_inputs = get_modal_inputs(body, view)
+    modal_inputs["send_lists"] = view["state"]["values"]["users_select"]["multi_users_select-action"]["selected_users"]
 
-    ack()
-    send_message(users_list, client)
+    send_message(ack, modal_inputs, client)
 
 
 def check_channels(ack: Ack, body: dict, client: WebClient, view: dict):
 
-    channel = [list(view["state"]["values"]["channel_select"].values())[0]["selected_channel"]]
+    modal_inputs = get_modal_inputs(body, view)
+    modal_inputs["send_lists"] = [list(view["state"]["values"]["channel_select"].values())[0]["selected_channel"]]
+
+    send_message(ack, modal_inputs, client)
+
+def get_modal_inputs(body: dict, view: dict):
+
+    start_date = view["state"]["values"]["start_date"]["datepicker-action"]["selected_date"]
+    end_date = view["state"]["values"]["end_date"]["datepicker-action"]["selected_date"]
+    start_time = view["state"]["values"]["start_time"]["timepicker-action"]["selected_time"]
+    end_time = view["state"]["values"]["end_time"]["timepicker-action"]["selected_time"]
+    modal_inputs = {
+        "host" : "<@"+body["user"]["id"]+">",
+        "date" : start_date + " から " + end_date,
+        "time" : start_time + " から " + end_time,
+        "setting" : view["state"]["values"]["display_result"]["result-option"]["selected_option"]["text"]["text"]
+    }
+
+    return modal_inputs
+
+def send_message(ack:Ack, inputs: dict, client: WebClient):
 
     ack()
-    send_message(channel, client)
 
+    message_json = read_json("./statics/request_message.json")
 
-def send_message(lists: list, client: WebClient):
-
+    for item in message_json[2:-1]:
+        item["text"]["text"]+=inputs[item["block_id"]]
+    
     # 選択したユーザ・チャンネルにメッセージを投稿する
-    for item in lists:
-
+    
+    for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
                                 text="Please Check the message",
-                                blocks=read_json("./statics/hello.json"))
-
+                                blocks=message_json)
 
 def register(app):
     logger.info("register")
@@ -94,7 +116,6 @@ def register(app):
     # ショートカット  モーダル発動　イベント
     app.shortcut("set_schedules_channel")(set_schedule)
     app.shortcut("set_schedules_im")(set_schedule)
-
 
     # モーダル入力時
     app.action("datepicker-action")(update_schedule)
