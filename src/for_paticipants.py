@@ -54,7 +54,7 @@ class Table:
             self.slots.extend(self.input_to_datetime(date, text))
 
     @staticmethod
-    def input_to_datetime(text, date="2021/05/11"):  # TODO: dateは仮
+    def input_to_datetime(date: dt.datetime, text: str):
         """ユーザーの入力を日付型に変換する．
 
         Examples
@@ -68,18 +68,22 @@ class Table:
         ValueError: `13:00-11:00` の入力が正しくありません。
 
         """
+        def to_datetime(date: dt.date, str_time: str) -> dt.datetime:
+            format = "%H:%M" if ":" in str_time else "%H%M"
+            time = dt.datetime.strptime(str_time, format).time()
+            return dt.datetime.combine(date, time)
+
+        # TODO: 半角に変換
+        # TODO: `15:00-` に対応する
         text = re.sub(r"\s*([:\-~,])\s*", r"\1", text)
         str_slots = text.split(",")
-        dt_slots = []
 
         for str_start, str_end in map(lambda slot: re.split(r"[\-~]", slot), str_slots):
-            start = dt.datetime.strptime(date + str_start, "%Y/%m/%d%H:%M")  # TODO: ゼロ埋めの有無でエラーが出るか確認
-            end = dt.datetime.strptime(date + str_end, "%Y/%m/%d%H:%M")
+            start = to_datetime(date, str_start)
+            end = to_datetime(date, str_end)
             if end <= start:
                 raise ValueError(f"`{str_start}-{str_end}` の入力が正しくありません。")
-            dt_slots.append((start, end))
-
-        return dt_slots
+            yield (start, end)
 
     def create_time_table(self, start: dt.datetime, end: dt.datetime):
         """空いている時間の表を作成する．
@@ -98,3 +102,12 @@ class Table:
         for s, e in self.slots:
             table[s:e - dt.timedelta(minutes=1)] = True
         return table
+
+
+if __name__ == "__main__":
+    data = {dt.date(2021, 7, 10): '9 : 00 -11 : 00, 14:30  ~ 18:00'}
+    name = "yuji"
+    date_pair = (dt.date(2021, 7, 8), dt.date(2021, 7, 12))
+    time_pair = (dt.time(6, 00), dt.time(22, 00))
+    table = Table(data, name, date_pair, time_pair)
+    print(table.slots)
