@@ -33,8 +33,7 @@ def set_target(ack: Ack, body: dict, client: WebClient):
 def check_target(ack: Ack, body: dict, client: WebClient, view: dict):
 
     ack()
-    block_id = body["view"]["blocks"][0]["block_id"]
-    target_value = view["state"]["values"][block_id]["target-select"]["selected_option"]["value"]
+    target_value = view["state"]["values"]["target"]["target-select"]["selected_option"]["value"]
 
     set_schedule(body["trigger_id"],client,target_value)
 
