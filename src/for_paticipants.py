@@ -2,10 +2,13 @@ import dataclasses
 import datetime as dt
 import re
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
 
 from blocks import read_json
-from settings import set_logger
+from settings import set_logger, TMP_DIR
 
 
 logger = set_logger(__name__)
@@ -100,6 +103,16 @@ class Table:
         stack = pd.Series(single.values, index=[index.date, index.time])
         table = stack.unstack().loc[:, start.time():end.time()]
         return table.astype(bool)
+
+    def visualize(self):
+        # TODO: レイアウトの調整
+        w = len(self.df.columns)
+        figsize = np.array(self.df.T.shape) * 10.5 / w
+        fig, ax = plt.subplots(figsize=figsize)
+        sns.heatmap(self.df, cbar=False, square=True,
+                    cmap="Blues", alpha=0.7,
+                    linecolor="grey", linewidths=0.2)
+        plt.savefig(f"{TMP_DIR}/table.png")
 
 
 if __name__ == "__main__":
