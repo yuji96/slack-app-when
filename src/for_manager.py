@@ -1,12 +1,12 @@
+from datetime import datetime, timedelta
+
 from slack_bolt import Ack
 from slack_sdk import WebClient
-
-from datetime import datetime, timedelta
 
 from blocks import read_json
 from settings import set_logger
 
-# TODO: デバッグ用で開発後には削除する    
+# TODO: デバッグ用で開発後には削除する
 from pprint import pprint
 
 logger = set_logger(__name__)
@@ -19,6 +19,7 @@ def home_tab(client, event, logger):
     client.views_publish(user_id=event["user"],
                          view=view_json)
 
+
 def set_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
     """日程調整用 Modal を表示する．"""
 
@@ -30,12 +31,12 @@ def set_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
     else:
         target = body["callback_id"].removeprefix("set_schedules_")
 
-    read_file = "./modals/set_schedules-" + target + ".json"
+    read_file = f"./modals/set_schedules-{target}.json"
     view_json = read_json(read_file)
 
     # 開始日を「今日」に、終了日を「明日」に設定
     today = datetime.today()
-    tomorrow = today + timedelta(1)
+    tomorrow = today + timedelta(days=1)
     view_json["blocks"][1]['accessory']['initial_date'] = str(today.date())
     view_json["blocks"][2]['accessory']['initial_date'] = str(tomorrow.date())
 
@@ -89,7 +90,8 @@ def get_modal_inputs(body: dict, values: dict):
 
     return modal_inputs
 
-def send_message(ack:Ack, inputs: dict, client: WebClient):
+
+def send_message(ack: Ack, inputs: dict, client: WebClient):
 
     ack()
 
@@ -100,23 +102,24 @@ def send_message(ack:Ack, inputs: dict, client: WebClient):
             item["text"]["text"]+=inputs[item["block_id"]]
     
     # 選択したユーザ・チャンネルにメッセージを投稿する
-    
+
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
                                 text="メッセージを確認してください",
                                 blocks=message_json)
 
+
 def register(app):
     logger.info("register")
 
-    # アプリのタブ　イベント
+    # アプリのタブ イベント
     app.event("app_home_opened")(home_tab)
 
-    # アプリのタブ内 モーダル発動　イベント
+    # アプリのタブ内 モーダル発動 イベント
     app.action("set_schedules_channel")(set_schedule)
     app.action("set_schedules_im")(set_schedule)
 
-    # ショートカット  モーダル発動　イベント
+    # ショートカット モーダル発動 イベント
     app.shortcut("set_schedules_channel")(set_schedule)
     app.shortcut("set_schedules_im")(set_schedule)
 
