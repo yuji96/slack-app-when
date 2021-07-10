@@ -49,20 +49,6 @@ def set_schedule(trigger_id, client: WebClient, target):
     view_json["blocks"][1]['accessory']['initial_date'] = str(today.date())
     view_json["blocks"][2]['accessory']['initial_date'] = str(tomorrow.date())
 
-    if "channel" in target:
-        
-        # TODO:OPTION追加用のモーダルを作成
-        options = [ {
-                        'text': {
-                            'type': 'plain_text', 
-                            'text': item["name"], 
-                            'emoji': True
-                        }, 
-                        'value': item["id"]
-                    } for item in client.conversations_list(types=target)['channels']]
-        
-        view_json["blocks"][6]["element"]["options"] = options
-
     client.views_open(trigger_id=trigger_id,
                       view=view_json)
 
@@ -88,7 +74,7 @@ def check_channels(ack: Ack, body: dict, client: WebClient, view: dict):
 
     ack()
     block_id = body["view"]["blocks"][6]["block_id"]
-    channel = [list(view["state"]["values"][block_id].values())[0]['selected_option']['value']]
+    channel = [list(view["state"]["values"][block_id].values())[0]["selected_channel"]]
 
     send_message(channel,client)
 
