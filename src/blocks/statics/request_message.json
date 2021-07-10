@@ -1,0 +1,68 @@
+[
+    {
+        "type": "header",
+        "text": {
+            "type": "plain_text",
+            "text": "時間調整のご協力",
+            "emoji": true
+        }
+    },
+    {
+        "type": "section",
+        "block_id": "to",
+        "text": {
+            "type": "mrkdwn",
+            "text": "\n以下の内容で時間調整を行います。"
+        }
+    },
+    {
+        "type": "section",
+        "block_id":"host",
+        "text":{
+            "type": "mrkdwn",
+            "text": "*主催者:*\n"
+        }
+    },
+    {
+        "type": "section",
+        "block_id":"date",
+        "text":{
+            "type": "mrkdwn",
+            "text": "*開催日:*\n"
+        }
+    },
+    {
+        "type": "section",
+        "block_id": "time",
+        "text": {
+            "type": "mrkdwn",
+            "text": "*開催時間:*\n"
+        }
+    },
+    {
+        "type": "section",
+        "block_id": "setting",
+        "text": {
+            "type": "mrkdwn",
+            "text": "*回答設定:*\n"
+        }
+    },
+    {
+        "type": "section",
+        "text": {
+            "type": "plain_text",
+            "text": "参加できる時間をお答え下さい"
+        },
+        "accessory": {
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": "回答する",
+                "emoji": true
+            },
+            "style": "primary",
+            "value": "answer-schedule",
+            "action_id": "answer-schedule"
+        }
+    }
+]
