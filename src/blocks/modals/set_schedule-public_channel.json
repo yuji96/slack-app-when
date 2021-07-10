@@ -108,30 +108,12 @@
 				"emoji": true
 			},
 			"element": {
-				"type": "static_select",
+				"type": "channels_select",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select an item",
 					"emoji": true
-				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "チャンネル1",
-							"emoji": true
-						},
-						"value": "チャンネル1"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "チャンネル2",
-							"emoji": true
-						},
-						"value": "チャンネル2"
-					}
-				]
+				}
 			}
 		},
 		{
