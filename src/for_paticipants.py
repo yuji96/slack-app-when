@@ -1,3 +1,4 @@
+import dataclasses
 import datetime as dt
 import re
 
@@ -38,12 +39,19 @@ def register(app):
 ##########################################
 
 
+@dataclasses.dataclass
 class Table:
-    def __init__(self, text: str, start=dt.datetime(2021, 5, 11, 8, 0), end=dt.datetime(2021, 5, 11, 12, 40), name: str=None):
-        self.name = name
+    data: dataclasses.InitVar[dict]
+    name: str
+    date_pair: tuple[dt.date, dt.date]
+    time_pair: tuple[dt.time, dt.time]
 
-        self.slots = self.input_to_datetime(text)
-        self.table = self.create_time_table(start, end)
+    slots: list = dataclasses.field(init=False, default_factory=list)
+    df: pd.DataFrame = dataclasses.field(init=False)
+
+    def __post_init__(self, data):
+        for date, text in data.items():
+            self.slots.extend(self.input_to_datetime(date, text))
 
     @staticmethod
     def input_to_datetime(text, date="2021/05/11"):  # TODO: dateは仮
