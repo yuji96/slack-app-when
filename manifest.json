@@ -20,10 +20,16 @@
     },
     "shortcuts": [
       {
-        "name": "test",
+        "name": "時間調整を始める : チャンネル",
         "type": "global",
-        "callback_id": "test",
-        "description": "test"
+        "callback_id": "set_schedules_channel",
+        "description": "チャンネル全体用の時間調整"
+      },
+      {
+        "name": "調整を始める : 個人",
+        "type": "global",
+        "callback_id": "set_schedules_im",
+        "description": "個人用の時間調整"
       }
     ]
   },

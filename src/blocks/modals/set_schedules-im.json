@@ -1,0 +1,173 @@
+{
+	"type": "modal",
+	"callback_id": "set_schedules-im",
+	"title": {
+	  "type": "plain_text",
+	  "text": "時間調整"
+	},
+	"submit": {
+		"type": "plain_text",
+		"text": "設定する",
+		"emoji": true
+	},
+	"close": {
+		"type": "plain_text",
+		"text": "閉じる",
+		"emoji": true
+	},
+	"blocks": [
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "開催したい日程",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"block_id": "start_date",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この日から"
+			},
+			"accessory": {
+				"type": "datepicker",
+				"initial_date": "Today",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select a date",
+					"emoji": true
+				},
+				"action_id": "datepicker-action"
+			}
+		},
+		{
+			"type": "section",
+			"block_id": "end_date",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この日までの間に開催したい"
+			},
+			"accessory": {
+				"type": "datepicker",
+				"initial_date": "1990-04-28",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select a date",
+					"emoji": true
+				},
+				"action_id": "datepicker-action"
+			}
+		},
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "開催可能な時間帯",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"block_id": "start_time",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この時刻から"
+			},
+			"accessory": {
+				"type": "timepicker",
+				"initial_time": "06:00",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select time",
+					"emoji": true
+				},
+				"action_id": "timepicker-action"
+			}
+		},
+		{
+			"type": "section",
+			"block_id": "end_time",
+			"text": {
+				"type": "mrkdwn",
+				"text": "この時刻まで"
+			},
+			"accessory": {
+				"type": "timepicker",
+				"initial_time": "23:00",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select time",
+					"emoji": true
+				},
+				"action_id": "timepicker-action"
+			}
+		},
+				{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "回答の公開範囲",
+				"emoji": true
+			}
+		},
+		{
+			"type": "input",
+			"block_id": "users_select",
+			"element": {
+				"type": "multi_users_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select target Users",
+					"emoji": true
+				},
+				"action_id": "multi_users_select-action"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": " ",
+				"emoji": true
+			}
+		},
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "回答の公開範囲",
+				"emoji": true
+			}
+		},
+		{
+			"type": "input",
+			"block_id": "display_result",
+			"label": {
+				"type": "plain_text",
+				"text": " ",
+				"emoji": true
+			},
+			"element": {				
+				"type": "radio_buttons",
+				"action_id": "result-option",
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "主催者だけに回答を送る",
+							"emoji": true
+						},
+						"value": "host"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "回答者に全員の回答を公開する",
+							"emoji": true
+						},
+						"value": "all"
+					}
+				]
+			}
+		}
+	]
+}

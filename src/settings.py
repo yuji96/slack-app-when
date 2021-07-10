@@ -11,6 +11,7 @@ SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 PORT = int(os.environ.get("PORT", 3000))
 
+
 def set_logger(name, level="INFO"):
     logger = getLogger(name)
     logger.setLevel(level)
