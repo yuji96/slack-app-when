@@ -59,30 +59,32 @@ def update_schedule(ack: Ack, body: dict, client: WebClient):
 def check_users(ack: Ack, body: dict, client: WebClient, view: dict):
     """日程調整用 Modal の提出を処理する．"""
 
-    modal_inputs = get_modal_inputs(body, view)
-    modal_inputs["send_lists"] = view["state"]["values"]["users_select"]["multi_users_select-action"]["selected_users"]
+    values = view["state"]["values"]
+    modal_inputs = get_modal_inputs(body, values)
+    modal_inputs["send_lists"] = values["users_select"]["multi_users_select-action"]["selected_users"]
 
     send_message(ack, modal_inputs, client)
 
 
 def check_channels(ack: Ack, body: dict, client: WebClient, view: dict):
 
-    modal_inputs = get_modal_inputs(body, view)
-    modal_inputs["send_lists"] = [list(view["state"]["values"]["channel_select"].values())[0]["selected_channel"]]
+    values = view["state"]["values"]
+    modal_inputs = get_modal_inputs(body, values)
+    modal_inputs["send_lists"] = [list(values["channel_select"].values())[0]["selected_channel"]]
 
     send_message(ack, modal_inputs, client)
 
-def get_modal_inputs(body: dict, view: dict):
+def get_modal_inputs(body: dict, values: dict):
 
-    start_date = view["state"]["values"]["start_date"]["datepicker-action"]["selected_date"]
-    end_date = view["state"]["values"]["end_date"]["datepicker-action"]["selected_date"]
-    start_time = view["state"]["values"]["start_time"]["timepicker-action"]["selected_time"]
-    end_time = view["state"]["values"]["end_time"]["timepicker-action"]["selected_time"]
+    start_date = values["start_date"]["datepicker-action"]["selected_date"]
+    end_date = values["end_date"]["datepicker-action"]["selected_date"]
+    start_time = values["start_time"]["timepicker-action"]["selected_time"]
+    end_time = values["end_time"]["timepicker-action"]["selected_time"]
     modal_inputs = {
         "host" : "<@"+body["user"]["id"]+">",
         "date" : start_date + " から " + end_date,
         "time" : start_time + " から " + end_time,
-        "setting" : view["state"]["values"]["display_result"]["result-option"]["selected_option"]["text"]["text"]
+        "setting" : values["display_result"]["result-option"]["selected_option"]["text"]["text"]
     }
 
     return modal_inputs
@@ -93,14 +95,15 @@ def send_message(ack:Ack, inputs: dict, client: WebClient):
 
     message_json = read_json("./statics/request_message.json")
 
-    for item in message_json[2:-1]:
-        item["text"]["text"]+=inputs[item["block_id"]]
+    for item in message_json:
+        if "block_id" in item:
+            item["text"]["text"]+=inputs[item["block_id"]]
     
     # 選択したユーザ・チャンネルにメッセージを投稿する
     
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
-                                text="Please Check the message",
+                                text="メッセージを確認してください",
                                 blocks=message_json)
 
 def register(app):

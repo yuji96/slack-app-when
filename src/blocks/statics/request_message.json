@@ -9,10 +9,9 @@
     },
     {
         "type": "section",
-        "block_id": "to",
         "text": {
             "type": "mrkdwn",
-            "text": "\n以下の内容で時間調整を行います。"
+            "text": "以下の内容で時間調整を行います。"
         }
     },
     {
