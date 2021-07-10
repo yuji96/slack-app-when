@@ -15,20 +15,24 @@
 	},
 	"blocks": [
 		{
-			"type": "input",
-			"label": {
+			"type": "header",
+			"text": {
 				"type": "plain_text",
 				"text": "申請カテゴリを選んでください。",
 				"emoji": true
+			}
+		},
+		{
+			"type": "input",
+			"block_id": "target",
+			"label": {
+				"type": "plain_text",
+				"text": " ",
+				"emoji": true
 			},
 			"element": {
-				"type": "static_select",
+				"type": "radio_buttons",
 				"action_id": "target-select",
-				"placeholder": {
-					"type": "plain_text",
-					"text": "Select an item",
-					"emoji": true
-				},
 				"options": [
 					{
 						"text": {
