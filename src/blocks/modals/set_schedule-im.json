@@ -100,6 +100,14 @@
 				"action_id": "timepicker-action"
 			}
 		},
+				{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "回答の公開範囲",
+				"emoji": true
+			}
+		},
 		{
 			"type": "input",
 			"element": {
@@ -113,7 +121,7 @@
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "回答者",
+				"text": " ",
 				"emoji": true
 			}
 		},
@@ -126,31 +134,34 @@
 			}
 		},
 		{
-			"type": "actions",
-			"elements": [
-				{
-					"type": "radio_buttons",
-					"options": [
-						{
-							"text": {
-								"type": "plain_text",
-								"text": "主催者だけに回答を送る",
-								"emoji": true
-							},
-							"value": "value-0"
+			"type": "input",
+			"label": {
+				"type": "plain_text",
+				"text": " ",
+				"emoji": true
+			},
+			"element": {				
+				"type": "radio_buttons",
+				"action_id": "result-option",
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "主催者だけに回答を送る",
+							"emoji": true
 						},
-						{
-							"text": {
-								"type": "plain_text",
-								"text": "チャンネルに全員の回答を公開する",
-								"emoji": true
-							},
-							"value": "value-1"
-						}
-					],
-					"action_id": "result-option"
-				}
-			]
+						"value": "value-0"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "チャンネルに全員の回答を公開する",
+							"emoji": true
+						},
+						"value": "value-1"
+					}
+				]
+			}
 		}
 	]
-  }
+}
