@@ -26,6 +26,7 @@
 		},
 		{
 			"type": "section",
+			"block_id": "start_date",
 			"text": {
 				"type": "mrkdwn",
 				"text": "この日から"
@@ -43,6 +44,7 @@
 		},
 		{
 			"type": "section",
+			"block_id": "end_date",
 			"text": {
 				"type": "mrkdwn",
 				"text": "この日までの間に開催したい"
@@ -68,6 +70,7 @@
 		},
 		{
 			"type": "section",
+			"block_id": "start_time",
 			"text": {
 				"type": "mrkdwn",
 				"text": "この時刻から"
@@ -85,9 +88,10 @@
 		},
 		{
 			"type": "section",
+			"block_id": "end_time",
 			"text": {
 				"type": "mrkdwn",
-				"text": "この時刻の間のどこかで開催したい"
+				"text": "この時刻まで"
 			},
 			"accessory": {
 				"type": "timepicker",
@@ -135,7 +139,7 @@
 							"text": "主催者だけに回答を送る",
 							"emoji": true
 						},
-						"value": "value-0"
+						"value": "host"
 					},
 					{
 						"text": {
@@ -143,7 +147,7 @@
 							"text": "チャンネルに全員の回答を公開する",
 							"emoji": true
 						},
-						"value": "value-1"
+						"value": "all"
 					}
 				]
 			}
