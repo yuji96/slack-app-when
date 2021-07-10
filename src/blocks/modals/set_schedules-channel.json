@@ -1,6 +1,6 @@
 {
 	"type": "modal",
-	"callback_id": "set-schedules-private-DM",
+	"callback_id": "set_schedules-channel",
 	"title": {
 	  "type": "plain_text",
 	  "text": "時間調整"
@@ -100,44 +100,29 @@
 				"action_id": "timepicker-action"
 			}
 		},
-				{
-			"type": "header",
-			"text": {
-				"type": "plain_text",
-				"text": "回答の公開範囲",
-				"emoji": true
-			}
-		},
 		{
 			"type": "input",
+			"block_id": "channel_select",
+			"label": {
+				"type": "plain_text",
+				"text": "回答者",
+				"emoji": true
+			},
 			"element": {
-				"type": "multi_users_select",
+				"type": "channels_select",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "Select users",
+					"text": "Select target Channel",
 					"emoji": true
-				},
-				"action_id": "multi_users_select-action"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": " ",
-				"emoji": true
-			}
-		},
-		{
-			"type": "header",
-			"text": {
-				"type": "plain_text",
-				"text": "回答の公開範囲",
-				"emoji": true
+				}
 			}
 		},
 		{
 			"type": "input",
+			"block_id": "display_result",
 			"label": {
 				"type": "plain_text",
-				"text": " ",
+				"text": "回答の公開範囲",
 				"emoji": true
 			},
 			"element": {				

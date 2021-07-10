@@ -1,19 +1,40 @@
-[
-  {
-    "type": "section",
-    "text": {
-      "type": "mrkdwn",
-      "text": "This is a section block with a button."
-    },
-    "accessory": {
-      "type": "button",
-      "text": {
-        "type": "plain_text",
-        "text": "Click Me",
-        "emoji": true
-      },
-      "value": "click_me_123",
-      "action_id": "schedule-request"
-    }
-  }
-]
+{
+  "type": "home",
+  "callback_id": "home_view",
+  "blocks":[
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "調整を始める　ー　チャンネル用"
+        },
+            "accessory": {
+                "type": "button",
+                "text": {
+                "type": "plain_text",
+                "text": "開始する",
+                "emoji": true
+                },
+                "value": "channel",
+                "action_id": "set_schedules_channel"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "調整を始める　ー　個人用"
+          },
+              "accessory": {
+                  "type": "button",
+                  "text": {
+                  "type": "plain_text",
+                  "text": "開始する",
+                  "emoji": true
+                  },
+                  "value": "im",
+                  "action_id": "set_schedules_im"
+              }
+          }
+    ]
+}   
