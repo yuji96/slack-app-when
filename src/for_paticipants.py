@@ -52,6 +52,7 @@ class Table:
     def __post_init__(self, data):
         for date, text in data.items():
             self.slots.extend(self.input_to_datetime(date, text))
+        self.df = self.create_time_table()
 
     @staticmethod
     def input_to_datetime(date: dt.datetime, text: str):
@@ -85,23 +86,20 @@ class Table:
                 raise ValueError(f"`{str_start}-{str_end}` の入力が正しくありません。")
             yield (start, end)
 
-    def create_time_table(self, start: dt.datetime, end: dt.datetime):
-        """空いている時間の表を作成する．
-
-        Examples
-        --------
-        >>> table = Table('9:00-11:00, 14:30~18:10')
-        >>> tmp = table.create_time_table(start=dt.datetime(2021, 5, 11, 8, 0), end=dt.datetime(2021, 5, 11, 12, 40))
-        >>> tmp.to_list()
-        [False, False, True, True, True, True, False, False, False, False]
-        
-        """
+    def create_time_table(self):
+        """空いている時間の表を作成する．"""
         # TODO: 強制的に30分区切りにする処理を追加する．
-        # TODO: multiindex 化したい．
-        table = pd.Series(data=False, index=pd.date_range(start, end, freq=dt.timedelta(minutes=30), closed="left"))
+        start = dt.datetime.combine(self.date_pair[0], self.time_pair[0])
+        end = dt.datetime.combine(self.date_pair[1], self.time_pair[1])
+
+        index = pd.date_range(start, end, freq=dt.timedelta(minutes=30))
+        single = pd.Series(False, index=index)
         for s, e in self.slots:
-            table[s:e - dt.timedelta(minutes=1)] = True
-        return table
+            single[s:e] = True
+
+        stack = pd.Series(single.values, index=[index.date, index.time])
+        table = stack.unstack().loc[:, start.time():end.time()]
+        return table.astype(bool)
 
 
 if __name__ == "__main__":
@@ -110,4 +108,4 @@ if __name__ == "__main__":
     date_pair = (dt.date(2021, 7, 8), dt.date(2021, 7, 12))
     time_pair = (dt.time(6, 00), dt.time(22, 00))
     table = Table(data, name, date_pair, time_pair)
-    print(table.slots)
+    table.visualize()
