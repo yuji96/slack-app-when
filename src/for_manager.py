@@ -22,6 +22,7 @@ def home_tab(client, event, logger):
         }
     )
 
+
 def set_target(ack: Ack, body: dict, client: WebClient):
 
     ack()
@@ -30,13 +31,15 @@ def set_target(ack: Ack, body: dict, client: WebClient):
     client.views_open(trigger_id=body["trigger_id"],
                       view=view_json)
 
+
 def check_target(ack: Ack, body: dict, client: WebClient, view: dict):
 
     ack()
     block_id = body["view"]["blocks"][0]["block_id"]
     target_value = view["state"]["values"][block_id]["target-select"]["selected_option"]["value"]
 
-    set_schedule(body["trigger_id"],client,target_value)
+    set_schedule(body["trigger_id"], client, target_value)
+
 
 def set_schedule(trigger_id, client: WebClient, target):
     """日程調整用 Modal を表示する．"""
@@ -50,21 +53,22 @@ def set_schedule(trigger_id, client: WebClient, target):
     view_json["blocks"][2]['accessory']['initial_date'] = str(tomorrow.date())
 
     if "channel" in target:
-        
+
         # TODO:OPTION追加用のモーダルを作成
-        options = [ {
+        options = [{
                         'text': {
-                            'type': 'plain_text', 
-                            'text': item["name"], 
+                            'type': 'plain_text',
+                            'text': item["name"],
                             'emoji': True
-                        }, 
+                        },
                         'value': item["id"]
                     } for item in client.conversations_list(types=target)['channels']]
-        
+
         view_json["blocks"][6]["element"]["options"] = options
 
     client.views_open(trigger_id=trigger_id,
                       view=view_json)
+
 
 def update_schedule(ack: Ack, body: dict, client: WebClient):
     """日程調整用 Modal の内容を更新する．"""
@@ -76,13 +80,15 @@ def update_schedule(ack: Ack, body: dict, client: WebClient):
                         hash=body["view"]["hash"],
                         view_id=body["view"]["id"])
 
+
 def check_users(ack: Ack, body: dict, client: WebClient, view: dict):
     """日程調整用 Modal の提出を処理する．"""
     ack()
     block_id = body["view"]["blocks"][6]["block_id"]
     users_list = view["state"]["values"][block_id]["multi_users_select-action"]["selected_users"]
 
-    send_message(users_list,client)
+    send_message(users_list, client)
+
 
 def check_channels(ack: Ack, body: dict, client: WebClient, view: dict):
 
@@ -90,7 +96,8 @@ def check_channels(ack: Ack, body: dict, client: WebClient, view: dict):
     block_id = body["view"]["blocks"][6]["block_id"]
     channel = [list(view["state"]["values"][block_id].values())[0]['selected_option']['value']]
 
-    send_message(channel,client)
+    send_message(channel, client)
+
 
 def send_message(lists: list, client: WebClient):
 
@@ -101,10 +108,9 @@ def send_message(lists: list, client: WebClient):
                                 text="Please Check the message",
                                 blocks=read_json("./statics/hello.json"))
 
+
 def register(app):
     logger.info("register")
-
-    # TODO: `Calleback ID` の命名規則を統一したい．
 
     # アプリのタブ　イベント
     app.event("app_home_opened")(home_tab)
