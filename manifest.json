@@ -20,10 +20,16 @@
     },
     "shortcuts": [
       {
-        "name": "set_schedules",
+        "name": "時間調整を始める : チャンネル",
         "type": "global",
-        "callback_id": "set_schedules",
-        "description": "test"
+        "callback_id": "set_schedules_channel",
+        "description": "選択したチャンネルにリクエストメッセージを送信します"
+      },
+      {
+        "name": "調整を始める : 個人",
+        "type": "global",
+        "callback_id": "set_schedules_im",
+        "description": "選択したユーザにDMリクエストメッセージを送信します"
       }
     ]
   },
