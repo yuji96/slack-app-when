@@ -34,14 +34,14 @@ def set_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
         target = target_id.removeprefix("set_schedules-")
 
     view_json["callback_id"] = target_id
-    view_json["blocks"]=insert_blocks(target)
+    view_json["blocks"]=insert_block(target)
     
     ack()
     client.views_open(trigger_id=body["trigger_id"],
                       view=view_json)
 
 
-def insert_blocks(target: str):
+def insert_block(target: str):
 
     insert_blocks = []
     directory = "./set"
