@@ -13,12 +13,13 @@ from pprint import pprint
 logger = set_logger(__name__)
 
 
-def home_tab(client, event, logger):
+def home_tab(client: WebClient, event: dict):
     """アプリホームビューを編集する．"""
 
     view_json = read_json("./statics/home.json")
-    client.views_publish(user_id=event["user"],
-                         view=view_json)
+    client.views_publish(
+        user_id = event["user"],
+        view = view_json)
 
 
 def open_modal(ack: Ack, body: dict, client: WebClient, view: dict):
@@ -41,7 +42,7 @@ def open_modal(ack: Ack, body: dict, client: WebClient, view: dict):
                       view=view_json)
 
 
-def insert_block(target: str):
+def insert_block(target: str) -> list:
 
     insert_blocks = []
     directory = "./set"
@@ -94,24 +95,28 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     ack()
     send_message(modal_inputs, client)
 
-def check_users(values):
+def check_users(values: dict) -> list:
     return values["users_select"]["multi_users_select-action"]["selected_users"]
 
-def check_channels(values):
+def check_channels(values: dict) -> list:
     return [list(values["channel_select"].values())[0]["selected_channel"]]
 
-def get_modal_inputs(body: dict, values: dict):
+def get_modal_inputs(body: dict, values: dict) -> dict:
 
     start_date = values["start_date"]["host_datepicker-action"]["selected_date"]
     end_date = values["end_date"]["host_datepicker-action"]["selected_date"]
     start_time = values["start_time"]["host_timepicker-action"]["selected_time"]
     end_time = values["end_time"]["host_timepicker-action"]["selected_time"]
-    setting = values["display_result"]["result-option"]["selected_option"]["text"]["text"]
+    setting = values["display_result"]["result-option"]["selected_option"]
+    setting_text = setting["text"]["text"]
+    setting_value = setting["value"]
+
     modal_inputs = {
         "host" : "<@"+body["user"]["id"]+">",
         "date" : start_date + " から " + end_date,
         "time" : start_time + " から " + end_time,
-        "setting" : setting,
+        "setting" : setting_text,
+        "setting_value": setting_value,
         "start_date" : start_date,
         "end_date" : end_date,
         "start_time" : start_time,
@@ -129,6 +134,11 @@ def send_message(inputs: dict, client: WebClient):
         if "block_id" in item:
             item["text"]["text"]+=inputs[item["block_id"]]
     
+    if inputs["setting_value"] == "host" :
+        message_json[-1]["accessory"]["value"] += "-host"
+    else:
+        message_json[-1]["accessory"]["value"] += "-all"
+
     # 選択したユーザ・チャンネルにメッセージを投稿する
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
