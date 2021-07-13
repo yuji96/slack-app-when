@@ -21,7 +21,7 @@ def home_tab(client, event, logger):
                          view=view_json)
 
 
-def set_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
+def open_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     """日程調整用 Modal を表示する．"""
 
     view_json = read_json("./modals/set_schedules.json")
@@ -66,37 +66,39 @@ def insert_block(target: str):
     return insert_blocks
 
 
-def update_schedule(ack: Ack, body: dict, client: WebClient):
+def update_modal(ack: Ack, body: dict, client: WebClient):
     """日程調整用 Modal の内容を更新する．"""
 
     view_json = read_json("./modals/set_schedules.json")
     view_json["blocks"] = body["view"]["blocks"]
+    view_json["callback_id"] = body["view"]["callback_id"]
+
+    #TODO: 入力した時間と日程が有効かどうか確認する
 
     ack()
     client.views_update(view=view_json,
                         hash=body["view"]["hash"],
                         view_id=body["view"]["id"])
 
-
-def check_users(ack: Ack, body: dict, client: WebClient, view: dict):
-    """日程調整用 Modal の提出を処理する．"""
+def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
 
     values = view["state"]["values"]
     modal_inputs = get_modal_inputs(body, values)
-    modal_inputs["send_lists"] = values["users_select"]["multi_users_select-action"]["selected_users"]
 
-    send_message(ack, modal_inputs, client)
+    target = body["view"]["callback_id"]
+    if target == 'set_schedules-im':
+        modal_inputs["send_lists"] = check_users(values)
+    elif target == 'set_schedules-channel':
+        modal_inputs["send_lists"] = check_channels(values)
 
+    ack()
+    send_message(modal_inputs, client)
 
-def check_channels(ack: Ack, body: dict, client: WebClient, view: dict):
+def check_users(values):
+    return values["users_select"]["multi_users_select-action"]["selected_users"]
 
-    values = view["state"]["values"]
-    modal_inputs = get_modal_inputs(body, values)
-    modal_inputs["send_lists"] = [
-        list(values["channel_select"].values())[0]["selected_channel"]]
-
-    send_message(ack, modal_inputs, client)
-
+def check_channels(values):
+    return [list(values["channel_select"].values())[0]["selected_channel"]]
 
 def get_modal_inputs(body: dict, values: dict):
 
@@ -115,10 +117,11 @@ def get_modal_inputs(body: dict, values: dict):
         "start_time" : start_time,
         "end_time" : end_time
     }
+
     return modal_inputs
 
 
-def send_message(ack: Ack, inputs: dict, client: WebClient):
+def send_message(inputs: dict, client: WebClient):
 
     message_json = read_json("./message/from_host.json")
 
@@ -127,7 +130,6 @@ def send_message(ack: Ack, inputs: dict, client: WebClient):
             item["text"]["text"]+=inputs[item["block_id"]]
     
     # 選択したユーザ・チャンネルにメッセージを投稿する
-    ack()
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
                                 text="メッセージを確認してください",
@@ -142,17 +144,17 @@ def register(app):
     app.event("app_home_opened")(home_tab)
 
     # アプリのタブ内 モーダル発動 イベント
-    app.action("set_schedules-channel")(set_schedule)
-    app.action("set_schedules-im")(set_schedule)
+    app.action("set_schedules-channel")(open_modal)
+    app.action("set_schedules-im")(open_modal)
 
     # ショートカット モーダル発動 イベント
-    app.shortcut("set_schedules-channel")(set_schedule)
-    app.shortcut("set_schedules-im")(set_schedule)
+    app.shortcut("set_schedules-channel")(open_modal)
+    app.shortcut("set_schedules-im")(open_modal)
 
     # モーダル入力時
-    app.action("host_datepicker-action")(update_schedule)
-    app.action("host_timepicker-action")(update_schedule)
+    app.action("host_datepicker-action")(update_modal)
+    app.action("host_timepicker-action")(update_modal)
 
     # モーダル提出時
-    app.view("set_schedules-im")(check_users)
-    app.view("set_schedules-channel")(check_channels)
+    app.view("set_schedules-im")(check_modal)
+    app.view("set_schedules-channel")(check_modal)
