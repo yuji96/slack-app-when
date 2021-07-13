@@ -1,0 +1,28 @@
+[
+    {
+    "type": "header",
+    "text": {
+        "type": "plain_text",
+        "text": "回答者",
+        "emoji": true
+    }
+    },
+    {
+        "type": "input",
+        "block_id": "users_select",
+        "element": {
+            "type": "multi_users_select",
+            "placeholder": {
+                "type": "plain_text",
+                "text": "Select target Users",
+                "emoji": true
+            },
+            "action_id": "multi_users_select-action"
+        },
+        "label": {
+            "type": "plain_text",
+            "text": " ",
+            "emoji": true
+        }
+    }
+]

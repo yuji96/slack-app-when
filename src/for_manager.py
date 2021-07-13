@@ -23,27 +23,43 @@ def home_tab(client, event, logger):
 def set_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
     """日程調整用 Modal を表示する．"""
 
-    # アプリのホームタブから
-    if "actions" in body:
-        target = body["actions"][0]["value"]
-
-    # ショートカットから
-    else:
-        target = body["callback_id"].removeprefix("set_schedules_")
-
-    read_file = f"./modals/set_schedules-{target}.json"
-    view_json = read_json(read_file)
-
-    # 開始日を「今日」に、終了日を「明日」に設定
-    today = datetime.today()
-    tomorrow = today + timedelta(days=1)
-    view_json["blocks"][1]['accessory']['initial_date'] = str(today.date())
-    view_json["blocks"][2]['accessory']['initial_date'] = str(tomorrow.date())
-
+    view_json = read_json("./modals/set_schedules.json")
+    view_json["blocks"]=insert_blocks(body)
+    
     ack()
     client.views_open(trigger_id=body["trigger_id"],
                       view=view_json)
 
+
+def insert_blocks(body: dict):
+
+    insert_blocks = []
+    directory = "./set"
+
+    # 開始日を「今日」に、終了日を「明日」に設定
+    today = datetime.today()
+    tomorrow = today + timedelta(days=1)
+    date_json=read_json(f"{directory}/set_date.json")
+    date_json[1]['accessory']['initial_date'] = str(today.date())
+    date_json[2]['accessory']['initial_date'] = str(tomorrow.date())
+    insert_blocks.extend(date_json)
+
+    time_json = read_json(f"{directory}/set_time.json")
+    insert_blocks.extend(time_json)
+
+    
+    if "actions" in body:                   # アプリのホームタブから
+        target = body["actions"][0]["value"]
+    else:                                   # ショートカットから
+        target = body["callback_id"].removeprefix("set_schedules_")
+
+    target_json = read_json(f"{directory}/set_{target}.json")
+    insert_blocks.extend(target_json)
+
+    display_json = read_json(f"{directory}/set_display.json")
+    insert_blocks.extend(display_json)
+
+    return insert_blocks
 
 def update_schedule(ack: Ack, body: dict, client: WebClient):
     """日程調整用 Modal の内容を更新する．"""
@@ -85,9 +101,12 @@ def get_modal_inputs(body: dict, values: dict):
         "host" : "<@"+body["user"]["id"]+">",
         "date" : start_date + " から " + end_date,
         "time" : start_time + " から " + end_time,
-        "setting" : values["display_result"]["result-option"]["selected_option"]["text"]["text"]
+        "setting" : values["display_result"]["result-option"]["selected_option"]["text"]["text"],
+        "start_date" : start_date,
+        "end_date" : end_date,
+        "start_time" : start_time,
+        "end_time" : end_time
     }
-
     return modal_inputs
 
 
@@ -106,7 +125,8 @@ def send_message(ack: Ack, inputs: dict, client: WebClient):
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
                                 text="メッセージを確認してください",
-                                blocks=message_json)
+                                blocks=message_json,
+                                as_user=True)
 
 
 def register(app):

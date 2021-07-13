@@ -60,8 +60,8 @@
                 "emoji": true
             },
             "style": "primary",
-            "value": "answer-schedule",
-            "action_id": "answer-schedule"
+            "value": "answer_schedule",
+            "action_id": "answer_schedule"
         }
     }
 ]
