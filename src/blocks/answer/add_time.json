@@ -1,0 +1,40 @@
+{
+    "type": "actions",
+    "block_id": "date-opt",
+    "elements": [
+        {
+            "type": "timepicker",
+            "initial_time" : "",
+            "placeholder": {
+                "type": "plain_text",
+                "text": "開始時間",
+                "emoji": true
+            },
+            "action_id": "member_start-timepicker-action"
+        },
+        {
+            "type": "timepicker",
+            "initial_time" : "",
+            "placeholder": {
+                "type": "plain_text",
+                "text": "終了時間",
+                "emoji": true
+            },
+            "action_id": "member_end-timepicker-action"
+        },
+        {
+            "type": "checkboxes",
+            "options": [
+                {
+                    "text": {
+                        "type": "plain_text",
+                        "text": "終日週可能",
+                        "emoji": true
+                    },
+                    "value": "all"
+                }
+            ],
+            "action_id": "member_check-action"
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+[
+    {
+        "type": "section",
+        "text": {
+            "type": "plain_text",
+            "text": "回答を共有するユーザー",
+            "emoji": true
+        }
+    },
+    {
+        "type": "input",
+        "block_id": "target_select",
+        "label": {
+            "type": "plain_text",
+            "text": " ",
+            "emoji": true
+        },
+        "element": {
+            "type": "multi_users_select",
+            "initial_users": [],
+            "action_id": "multi_users_select-action"
+        }
+    }
+]

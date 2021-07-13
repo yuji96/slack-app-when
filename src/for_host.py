@@ -120,7 +120,7 @@ def get_modal_inputs(body: dict, values: dict):
 
 def send_message(ack: Ack, inputs: dict, client: WebClient):
 
-    message_json = read_json("./statics/request_message.json")
+    message_json = read_json("./message/from_host.json")
 
     for item in message_json:
         if "block_id" in item:
