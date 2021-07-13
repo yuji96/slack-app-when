@@ -22,7 +22,7 @@
                 "text": "Select a date",
                 "emoji": true
             },
-            "action_id": "datepicker-action"
+            "action_id": "host_datepicker-action"
         }
     },
     {
@@ -40,7 +40,7 @@
                 "text": "Select a date",
                 "emoji": true
             },
-            "action_id": "datepicker-action"
+            "action_id": "host_datepicker-action"
         }
     }
 ]

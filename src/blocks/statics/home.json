@@ -16,7 +16,7 @@
                 "emoji": true
                 },
                 "value": "channel",
-                "action_id": "set_schedules_channel"
+                "action_id": "set_schedules-channel"
             }
         },
         {
@@ -33,7 +33,7 @@
                   "emoji": true
                   },
                   "value": "im",
-                  "action_id": "set_schedules_im"
+                  "action_id": "set_schedules-im"
               }
           }
     ]

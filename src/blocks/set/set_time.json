@@ -22,7 +22,7 @@
                 "text": "Select time",
                 "emoji": true
             },
-            "action_id": "timepicker-action"
+            "action_id": "host_timepicker-action"
         }
     },
     {
@@ -40,7 +40,7 @@
                 "text": "Select time",
                 "emoji": true
             },
-            "action_id": "timepicker-action"
+            "action_id": "host_timepicker-action"
         }
     }
 ]

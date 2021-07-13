@@ -22,13 +22,13 @@
       {
         "name": "時間調整を始める : チャンネル",
         "type": "global",
-        "callback_id": "set_schedules_channel",
+        "callback_id": "set_schedules-channel",
         "description": "チャンネル全体用の時間調整"
       },
       {
         "name": "調整を始める : 個人",
         "type": "global",
-        "callback_id": "set_schedules_im",
+        "callback_id": "set_schedules-im",
         "description": "個人用の時間調整"
       }
     ]
