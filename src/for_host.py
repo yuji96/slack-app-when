@@ -113,6 +113,7 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 
     modal_inputs = {
         "host" : "<@"+body["user"]["id"]+">",
+        "host_id" : body["user"]["id"],
         "date" : start_date + " から " + end_date,
         "time" : start_time + " から " + end_time,
         "setting" : setting_text,
@@ -135,15 +136,21 @@ def send_message(inputs: dict, client: WebClient):
             item["text"]["text"]+=inputs[item["block_id"]]
     
     if inputs["setting_value"] == "host" :
-        message_json[-1]["accessory"]["value"] += "-host"
+        message_json[-1]["elements"][0]["value"] += "-host"
+        message_json[-1]["elements"][1]["value"] += "-host"
+
     else:
-        message_json[-1]["accessory"]["value"] += "-all"
+        message_json[-1]["elements"][0]["value"] += "-all"
+        message_json[-1]["elements"][1]["value"] += "-all"
+    
+    
 
     # 選択したユーザ・チャンネルにメッセージを投稿する
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
                                 text="メッセージを確認してください",
                                 blocks=message_json,
+                                private_metadata=inputs["host_id"],
                                 as_user=True)
 
 

@@ -47,21 +47,30 @@
         }
     },
     {
-        "type": "section",
-        "text": {
-            "type": "plain_text",
-            "text": "参加できる時間をお答え下さい"
-        },
-        "accessory": {
-            "type": "button",
-            "text": {
-                "type": "plain_text",
-                "text": "回答する",
-                "emoji": true
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "回答する",
+                    "emoji": true
+                },
+                "style": "primary",
+                "value": "answer_schedule",
+                "action_id": "answer_schedule"
             },
-            "style": "primary",
-            "value": "answer_schedule",
-            "action_id": "answer_schedule"
-        }
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "不参加",
+                    "emoji": true
+                },
+                "style": "danger",
+                "value": "answer_schedule",
+                "action_id": "not_answer"
+            }
+        ]
     }
 ]
