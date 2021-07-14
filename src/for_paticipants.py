@@ -1,6 +1,8 @@
+from collections import namedtuple
 import dataclasses
 import datetime as dt
 import re
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,18 +43,22 @@ def register(app):
 # utilities
 ##########################################
 
+StartEnd = namedtuple('StartEnd', ['start', 'end'])
+
 
 @dataclasses.dataclass
 class Table:
     data: dataclasses.InitVar[dict]
     name: str
-    date_pair: tuple[dt.date, dt.date]
-    time_pair: tuple[dt.time, dt.time]
+    date_pair: Union[tuple[dt.date, dt.date], StartEnd]
+    time_pair: Union[tuple[dt.date, dt.date], StartEnd]
 
     slots: list = dataclasses.field(init=False, default_factory=list)
     df: pd.DataFrame = dataclasses.field(init=False)
 
     def __post_init__(self, data):
+        self.date_pair = StartEnd(*self.date_pair)
+        self.time_pair = StartEnd(*self.time_pair)
         for date, text in data.items():
             self.slots.extend(self.input_to_datetime(date, text))
         self.df = self.create_time_table()
@@ -92,8 +98,8 @@ class Table:
     def create_time_table(self):
         """空いている時間の表を作成する．"""
         # TODO: 強制的に30分区切りにする処理を追加する．
-        start = dt.datetime.combine(self.date_pair[0], self.time_pair[0])
-        end = dt.datetime.combine(self.date_pair[1], self.time_pair[1])
+        start = dt.datetime.combine(self.date_pair.start, dt.time())
+        end = dt.datetime.combine(self.date_pair.end, self.time_pair.end)
 
         index = pd.date_range(start, end, freq=dt.timedelta(minutes=30))
         single = pd.Series(False, index=index)
@@ -101,6 +107,7 @@ class Table:
             single[s:e] = True
 
         single.set_axis([index.date, index.time], axis="index", inplace=True)
+        # ここで切り取ってるから30分区切りにする必要はない．
         table = single.unstack().loc[:, start.time():end.time()]
         return table.astype(bool)
 
