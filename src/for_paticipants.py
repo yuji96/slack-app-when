@@ -52,16 +52,20 @@ class Table:
     name: str
     date_pair: Union[tuple[dt.date, dt.date], StartEnd]
     time_pair: Union[tuple[dt.date, dt.date], StartEnd]
+    df: dataclasses.InitVar[Optional[pd.DataFrame]] = None
 
     slots: list = dataclasses.field(init=False, default_factory=list)
-    df: pd.DataFrame = dataclasses.field(init=False)
 
-    def __post_init__(self, data):
+    def __post_init__(self, data, df):
         self.date_pair = StartEnd(*self.date_pair)
         self.time_pair = StartEnd(*self.time_pair)
         for date, text in data.items():
             self.slots.extend(self.input_to_datetime(date, text))
-        self.df = self.create_time_table()
+
+        if isinstance(df, pd.DataFrame):
+            self.df = df
+        else:
+            self.df = self.create_time_table()
 
     @staticmethod
     def input_to_datetime(date: dt.datetime, text: str):
