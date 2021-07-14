@@ -16,7 +16,7 @@ logger = set_logger(__name__)
 def home_tab(client: WebClient, event: dict):
     """アプリホームビューを編集する．"""
 
-    view_json = read_json("./statics/home.json")
+    view_json = read_json("./app_menu/home.json")
     client.views_publish(
         user_id = event["user"],
         view = view_json)
