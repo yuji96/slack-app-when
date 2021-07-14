@@ -1,0 +1,10 @@
+[
+    {
+        "type": "header",
+        "text": {
+            "type": "plain_text",
+            "text": "時間調整の詳細",
+            "emoji": true
+        }
+    }
+]

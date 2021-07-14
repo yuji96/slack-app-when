@@ -142,17 +142,20 @@ def send_message(inputs: dict, client: WebClient):
     else:
         message_json[-1]["elements"][0]["value"] += "-all"
         message_json[-1]["elements"][1]["value"] += "-all"
-    
-    
 
     # 選択したユーザ・チャンネルにメッセージを投稿する
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
                                 text="メッセージを確認してください",
                                 blocks=message_json,
-                                private_metadata=inputs["host_id"],
                                 as_user=True)
 
+    detail_json = read_json("./message/schedule_detail.json")
+    detail_json.extend(message_json[3:-1])
+    client.chat_postMessage(channel=inputs["host_id"],
+                            text="メッセージを確認してください",
+                            blocks=detail_json,
+                            as_user=True)
 
 def register(app):
     logger.info("register")

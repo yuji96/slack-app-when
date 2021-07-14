@@ -173,6 +173,7 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     send_message(ack, get_modal_inputs(body, values), client)
 
 
+
 def send_message(ack: Ack, inputs: dict, client: WebClient):
 
     message_json = read_json("./message/from_member.json")
@@ -189,12 +190,80 @@ def send_message(ack: Ack, inputs: dict, client: WebClient):
             blocks = message_json,
             as_user = True)
 
+def click_message(ack: Ack, body: dict, client: WebClient):
+
+    host = body["message"]["blocks"][2]["text"]["text"].split('@')[1].strip('>')
+    member = body["user"]["id"]
+    app = body["message"]["user"]
+    post_time = body["message"]["ts"]
+
+    ack()
+    channels_list = client.conversations_list(
+        channel = app,
+        types = "im")["channels"]
+
+
+    # Target DM
+    for item in channels_list:
+        if item['user'] == host:
+            target_channel = item['id']
+            break
+
+    # Target message
+    message_list = client.conversations_history(
+        channel = target_channel,
+        oldest = post_time,
+        limit = 20)["messages"]
+    
+    if message_list == []:
+        return
+    
+    thread_present = False
+    target_message = message_list[-1]["ts"]
+
+    # If Threads exist
+    if "thread_ts" in message_list[-1]:
+        thread_present = True
+
+        reply_content = client.conversations_replies(
+            channel = target_channel,
+            ts = message_list[-1]["thread_ts"],
+        )["messages"][-1]
+
+        target_message = reply_content["ts"]
+        message_content = reply_content["blocks"][0]["text"]["text"]
+
+
+    message_json = read_json("./message/from_member.json")
+
+    message_text = message_json[0]["text"]["text"]
+    message_text = message_text.replace("I",f"<@{member}>")
+
+    if thread_present:
+        message_text += f"\n{message_content}"
+        message_json[0]["text"]["text"] = message_text
+
+        client.chat_update(
+            channel = target_channel,
+            text = "メッセージを確認してください",
+            blocks = message_json,
+            ts = target_message,
+            as_user = True)
+    else:
+        message_json[0]["text"]["text"] = message_text
+        client.chat_postMessage(
+            channel = target_channel,
+            text = "メッセージを確認してください",
+            blocks = message_json,
+            thread_ts = target_message)
+
 
 def register(app):
     logger.info("register")
     
     # メッセージのクリック時
     app.action("answer_schedule")(open_modal)
+    app.action("not_answer")(click_message)
 
     # 「追加」ボタンのクリック時
     app.action("member-add_date")(update_modal)
