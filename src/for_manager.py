@@ -61,8 +61,9 @@ def insert_block(target: str) -> list:
     target_json = read_json(f"{directory}/set_{target}.json")
     insert_blocks.extend(target_json)
 
-    display_json = read_json(f"{directory}/set_display.json")
-    insert_blocks.extend(display_json)
+    if target == "channel":
+        display_json = read_json(f"{directory}/set_display.json")
+        insert_blocks.extend(display_json)
 
     return insert_blocks
 
@@ -81,6 +82,41 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
                         hash=body["view"]["hash"],
                         view_id=body["view"]["id"])
 
+
+def check_users(values: dict) -> list:
+    return values["users_select"]["multi_users_select-action"]["selected_users"]
+
+
+def check_channels(values: dict) -> list:
+    return [list(values["channel_select"].values())[0]["selected_channel"]]
+
+
+def get_modal_inputs(body: dict, values: dict) -> dict:
+
+    start_date = values["start_date"]["host_datepicker-action"]["selected_date"]
+    end_date = values["end_date"]["host_datepicker-action"]["selected_date"]
+    start_time = values["start_time"]["host_timepicker-action"]["selected_time"]
+    end_time = values["end_time"]["host_timepicker-action"]["selected_time"]
+
+    modal_inputs = {
+        "host" : "<@"+body["user"]["id"]+">",
+        "host_id" : body["user"]["id"],
+        "date" : start_date + " から " + end_date,
+        "time" : start_time + " から " + end_time,
+        "start_date" : start_date,
+        "end_date" : end_date,
+        "start_time" : start_time,
+        "end_time" : end_time
+    }
+    
+    if "display_result" in values:
+        setting = values["display_result"]["result-option"]["selected_option"]
+        modal_inputs["setting"] = setting["text"]["text"]
+        modal_inputs["setting_value"] = setting["value"]
+
+    return modal_inputs
+
+
 def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
 
     values = view["state"]["values"]
@@ -95,37 +131,6 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     ack()
     send_message(modal_inputs, client)
 
-def check_users(values: dict) -> list:
-    return values["users_select"]["multi_users_select-action"]["selected_users"]
-
-def check_channels(values: dict) -> list:
-    return [list(values["channel_select"].values())[0]["selected_channel"]]
-
-def get_modal_inputs(body: dict, values: dict) -> dict:
-
-    start_date = values["start_date"]["host_datepicker-action"]["selected_date"]
-    end_date = values["end_date"]["host_datepicker-action"]["selected_date"]
-    start_time = values["start_time"]["host_timepicker-action"]["selected_time"]
-    end_time = values["end_time"]["host_timepicker-action"]["selected_time"]
-    setting = values["display_result"]["result-option"]["selected_option"]
-    setting_text = setting["text"]["text"]
-    setting_value = setting["value"]
-
-    modal_inputs = {
-        "host" : "<@"+body["user"]["id"]+">",
-        "host_id" : body["user"]["id"],
-        "date" : start_date + " から " + end_date,
-        "time" : start_time + " から " + end_time,
-        "setting" : setting_text,
-        "setting_value": setting_value,
-        "start_date" : start_date,
-        "end_date" : end_date,
-        "start_time" : start_time,
-        "end_time" : end_time
-    }
-
-    return modal_inputs
-
 
 def send_message(inputs: dict, client: WebClient):
 
@@ -133,15 +138,20 @@ def send_message(inputs: dict, client: WebClient):
 
     for item in message_json:
         if "block_id" in item:
-            item["text"]["text"]+=inputs[item["block_id"]]
-    
-    if inputs["setting_value"] == "host" :
-        message_json[-1]["elements"][0]["value"] += "-host"
-        message_json[-1]["elements"][1]["value"] += "-host"
+            if item["block_id"] not in inputs:
+                message_json.remove(item)
+            else:
+                item["text"]["text"]+=inputs[item["block_id"]]
 
-    else:
-        message_json[-1]["elements"][0]["value"] += "-all"
-        message_json[-1]["elements"][1]["value"] += "-all"
+    detail_json = read_json("./message/schedule_detail.json")
+    detail_json.extend(message_json[3:-1])
+    response = client.chat_postMessage(channel=inputs["host_id"],
+                            text="メッセージを確認してください",
+                            blocks=detail_json,
+                            as_user=True)
+
+    message_json[-1]["elements"][0]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
+    message_json[-1]["elements"][1]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
 
     # 選択したユーザ・チャンネルにメッセージを投稿する
     for item in inputs["send_lists"]:
@@ -150,12 +160,6 @@ def send_message(inputs: dict, client: WebClient):
                                 blocks=message_json,
                                 as_user=True)
 
-    detail_json = read_json("./message/schedule_detail.json")
-    detail_json.extend(message_json[3:-1])
-    client.chat_postMessage(channel=inputs["host_id"],
-                            text="メッセージを確認してください",
-                            blocks=detail_json,
-                            as_user=True)
 
 def register(app):
     logger.info("register")
@@ -178,3 +182,4 @@ def register(app):
     # モーダル提出時
     app.view("set_schedules-im")(check_modal)
     app.view("set_schedules-channel")(check_modal)
+

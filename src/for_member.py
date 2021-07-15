@@ -40,13 +40,12 @@ def insert_block(body: dict) -> list:
     for item in values["date"]:
         insert_blocks.extend(generate_block(item,values["time"],1))
 
+    option_json=read_json("./answer/add_option.json")
+    option_json["value"] = body["actions"][-1]["value"]
+    
     users_json=read_json("./answer/add_user.json")
-    users_json[1]["element"]["initial_users"].append(body["user"]["id"])
-
-    cond1 = body["channel"]["name"] != "directmessage"
-    cond2 = body["actions"][0]["value"].removeprefix("answer_schedule-") != "host"
-    if cond1 and cond2:
-        users_json[1]["element"]["initial_users"].append(body["channel"]["id"])
+    users_json[-1]["element"]["initial_option"]=option_json
+    users_json[-1]["element"]["options"].append(option_json)
 
     insert_blocks.extend(users_json)
 
@@ -136,7 +135,7 @@ def update_time(body: dict) -> dict:
 def get_modal_inputs(body: dict, values: dict) -> dict:
 
     host = "<@" + body["user"]["id"] + ">"
-    targets = values["target_select"]["multi_users_select-action"]["selected_users"]
+    targets = values["target_select"]["static_select-action"]["selected_option"]["value"]
 
     dates,date = {}, "date"
     for item in values:
@@ -160,7 +159,7 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 
     return {
         "host" : host,
-        "send_lists" : targets,
+        "send_lists" : [targets],
         "available_date" : dates
     }
 
@@ -168,66 +167,38 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
 
     values = view["state"]["values"]
-
+    
     ack()
     send_message(ack, get_modal_inputs(body, values), client)
 
+def send_host(ack: Ack, body: dict, client: WebClient):
 
-
-def send_message(ack: Ack, inputs: dict, client: WebClient):
-
-    message_json = read_json("./message/from_member.json")
-
-    #for item in message_json:
-    #    if "block_id" in item:
-    #        item["text"]["text"]+=inputs[item["block_id"]]
-
-    # 選択したユーザ・チャンネルにメッセージを投稿する
-    for item in inputs["send_lists"]:
-        client.chat_postMessage(
-            channel = item,
-            text = "メッセージを確認してください",
-            blocks = message_json,
-            as_user = True)
-
-def click_message(ack: Ack, body: dict, client: WebClient):
-
-    host = body["message"]["blocks"][2]["text"]["text"].split('@')[1].strip('>')
+    target_channel, host, post_time = body["actions"][0]["value"].split('-')
     member = body["user"]["id"]
-    app = body["message"]["user"]
-    post_time = body["message"]["ts"]
 
     ack()
-    channels_list = client.conversations_list(
-        channel = app,
-        types = "im")["channels"]
-
-
-    # Target DM
-    for item in channels_list:
-        if item['user'] == host:
-            target_channel = item['id']
-            break
 
     # Target message
     message_list = client.conversations_history(
         channel = target_channel,
         oldest = post_time,
-        limit = 20)["messages"]
+        inclusive = True,
+        limit=1)["messages"]
     
     if message_list == []:
         return
-    
-    thread_present = False
-    target_message = message_list[-1]["ts"]
+
+    message_info = message_list[0]
+    target_message = message_info["ts"]
 
     # If Threads exist
-    if "thread_ts" in message_list[-1]:
+    thread_present = False
+    if "thread_ts" in message_info:
         thread_present = True
 
         reply_content = client.conversations_replies(
             channel = target_channel,
-            ts = message_list[-1]["thread_ts"],
+            ts = message_info["thread_ts"],
         )["messages"][-1]
 
         target_message = reply_content["ts"]
@@ -235,35 +206,43 @@ def click_message(ack: Ack, body: dict, client: WebClient):
 
 
     message_json = read_json("./message/from_member.json")
-
-    message_text = message_json[0]["text"]["text"]
-    message_text = message_text.replace("I",f"<@{member}>")
-
+    message_json[0]["text"]["text"] = message_json[0]["text"]["text"].replace("I",f"<@{member}>")
+    
     if thread_present:
-        message_text += f"\n{message_content}"
-        message_json[0]["text"]["text"] = message_text
+        message_json[0]["text"]["text"] += f"\n{message_content}"
+    
+    send_message(
+        thread=thread_present,
+        target_channel=target_channel,
+        target_message=target_message,
+        input_block=message_json,
+        client=client
+    )
 
+
+def send_message(thread: bool, target_channel: str, target_message: str, input_block: dict, client: WebClient):
+
+    if thread:
         client.chat_update(
             channel = target_channel,
             text = "メッセージを確認してください",
-            blocks = message_json,
+            blocks = input_block,
             ts = target_message,
             as_user = True)
     else:
-        message_json[0]["text"]["text"] = message_text
         client.chat_postMessage(
             channel = target_channel,
             text = "メッセージを確認してください",
-            blocks = message_json,
-            thread_ts = target_message)
-
+            blocks = input_block,
+            thread_ts = target_message,
+            as_user = True)
 
 def register(app):
     logger.info("register")
     
     # メッセージのクリック時
     app.action("answer_schedule")(open_modal)
-    app.action("not_answer")(click_message)
+    app.action("not_answer")(send_host)
 
     # 「追加」ボタンのクリック時
     app.action("member-add_date")(update_modal)

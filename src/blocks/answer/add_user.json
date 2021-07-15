@@ -10,15 +10,16 @@
     {
         "type": "input",
         "block_id": "target_select",
+        "element": {
+            "type": "static_select",
+            "initial_option": {},
+            "options": [],
+            "action_id": "static_select-action"
+        },
         "label": {
             "type": "plain_text",
             "text": " ",
             "emoji": true
-        },
-        "element": {
-            "type": "multi_users_select",
-            "initial_users": [],
-            "action_id": "multi_users_select-action"
         }
     }
 ]
