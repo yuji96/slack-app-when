@@ -18,6 +18,7 @@ logger = set_logger(__name__)
 def home_tab(client: WebClient, event: dict) -> dict:
     """アプリホームビューを編集する．"""
 
+    # ホームメニューのブロック
     view_json = read_json("./app_tab/home.json")
     
     # ホームメニューを表示する
@@ -29,6 +30,7 @@ def home_tab(client: WebClient, event: dict) -> dict:
 def open_modal(ack: Ack, body: dict, client: WebClient, view: dict) -> dict:
     """日程調整用 Modal を表示する．"""
 
+    # モーダルの基礎ブロック
     view_json = read_json("./modals/set_schedules.json")
 
     # アプリホームビュー から
@@ -58,6 +60,8 @@ def insert_block(target: str) -> list:
     """日程調整用 Modal のブロックを追加する．"""
 
     insert_blocks = []
+    
+    # 日程調整用 Modal ブロックのディレクトリ
     directory = "./set"
 
     # 日程選択 のブロック
@@ -91,6 +95,8 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
     """日程調整用 Modal の内容を更新する．"""
 
     view_json = read_json("./modals/set_schedules.json")
+    
+    # 更新する内容
     view_json["blocks"] = body["view"]["blocks"]
     view_json["callback_id"] = body["view"]["callback_id"]
 
@@ -99,9 +105,10 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
     ack()
 
     # モーダルを更新する
-    client.views_update(view=view_json,
-                        hash=body["view"]["hash"],
-                        view_id=body["view"]["id"])
+    client.views_update(
+        view=view_json,
+        hash=body["view"]["hash"],
+        view_id=body["view"]["id"])
 
 
 def check_users(values: dict) -> list:
@@ -151,6 +158,8 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     """日程調整用 Modal の提出を確認する．"""
 
     values = view["state"]["values"]
+    
+    #　モーダルの入力値を取得
     modal_inputs = get_modal_inputs(body, values)
 
     # チャンネル・個人用 の確認
@@ -169,6 +178,7 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
 def send_message(inputs: dict, client: WebClient):
     """選択した回答者宛に メッセージ を送る．"""   
 
+    # 回答者宛のメッセージブロック
     message_json = read_json("./message/from_host.json")
 
     for item in message_json:
@@ -178,6 +188,7 @@ def send_message(inputs: dict, client: WebClient):
             else:
                 item["text"]["text"]+=inputs[item["block_id"]]
 
+    # 主催者用の　スケジュール調整の詳細ブロック
     detail_json = read_json("./message/schedule_detail.json")
     detail_json.extend(message_json[3:-1])
     
@@ -187,6 +198,7 @@ def send_message(inputs: dict, client: WebClient):
                             blocks=detail_json,
                             as_user=True)
 
+    # 主催者と主催メッセージの情報を追加する
     message_json[-1]["elements"][0]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
     message_json[-1]["elements"][1]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
 

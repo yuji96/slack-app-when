@@ -158,7 +158,6 @@ def update_time(body: dict) -> dict:
 def get_modal_inputs(body: dict, values: dict) -> dict:
     """回答用 Modal の 入力を取得する．"""
 
-
     host = "<@" + body["user"]["id"] + ">"
     targets = values["target_select"]["static_select-action"]["selected_option"]["value"]
     dates,date = {}, "date"
@@ -207,7 +206,7 @@ def get_message(value: str, client: WebClient):
     message_info = message_list[0]
     target_message = message_info["ts"]
 
-    # If Threads exist
+    # スレッドの確認
     thread_present = False
     if "thread_ts" in message_info:
         thread_present = True
@@ -244,6 +243,7 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
 def send_answer(inputs: dict, secret_value: str, client: WebClient):
     """回答用 Modal の提出を確認メッセージを送信する．"""
 
+    #　スケジュール調整の詳細メッセージスレッドを取得
     result = get_message(secret_value,client)
 
     message_json = read_json("./message/from_member-yes.json")
@@ -271,6 +271,8 @@ def send_not_answer(ack: Ack, body: dict, client: WebClient):
 
     member = body["user"]["id"]
     secret_value = body["actions"][0]["value"]
+    
+    #　スケジュール調整の詳細メッセージスレッドを取得
     result = get_message(secret_value, client)
 
     message_json = read_json("./message/from_member-no.json")
