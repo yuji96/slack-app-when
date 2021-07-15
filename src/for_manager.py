@@ -1,3 +1,5 @@
+""" スケジュール調整を主催する為の機能 """
+
 from datetime import datetime, timedelta
 
 from slack_bolt import Ack
@@ -13,54 +15,71 @@ from pprint import pprint
 logger = set_logger(__name__)
 
 
-def home_tab(client: WebClient, event: dict):
+def home_tab(client: WebClient, event: dict) -> dict:
     """アプリホームビューを編集する．"""
 
     view_json = read_json("./app_tab/home.json")
+    
+    # ホームメニューを表示する
     client.views_publish(
         user_id = event["user"],
         view = view_json)
 
 
-def open_modal(ack: Ack, body: dict, client: WebClient, view: dict):
+def open_modal(ack: Ack, body: dict, client: WebClient, view: dict) -> dict:
     """日程調整用 Modal を表示する．"""
 
     view_json = read_json("./modals/set_schedules.json")
 
-    if "actions" in body:                   # アプリのホームタブから
+    # アプリホームビュー から
+    if "actions" in body:
         target_id = body["actions"][0]["action_id"]
         target = body["actions"][0]["value"]
-    else:                                   # ショートカットから
+
+    # ショートカット から
+    else:
         target_id = body["callback_id"]
         target = target_id.removeprefix("set_schedules-")
 
     view_json["callback_id"] = target_id
-    view_json["blocks"]=insert_block(target)
-    
+
+    #　モーダルのブロック を追加
+    view_json["blocks"]　=　insert_block(target)    
+
     ack()
-    client.views_open(trigger_id=body["trigger_id"],
-                      view=view_json)
+    
+    # モーダルを開く
+    client.views_open(
+        trigger_id=body["trigger_id"],
+        view=view_json)
 
 
 def insert_block(target: str) -> list:
+    """日程調整用 Modal のブロックを追加する．"""
 
     insert_blocks = []
     directory = "./set"
 
-    # 開始日を「今日」に、終了日を「明日」に設定
+    # 日程選択 のブロック
     today = datetime.today()
     tomorrow = today + timedelta(days=1)
     date_json=read_json(f"{directory}/set_date.json")
+
+    # 開始日 ->「今日」、終了日 ->「明日」 に設定
     date_json[1]['accessory']['initial_date'] = str(today.date())
     date_json[2]['accessory']['initial_date'] = str(tomorrow.date())
+
     insert_blocks.extend(date_json)
 
+    # 時間選択 のブロック
     time_json = read_json(f"{directory}/set_time.json")
     insert_blocks.extend(time_json)
 
+    # 回答者選択 のブロック
     target_json = read_json(f"{directory}/set_{target}.json")
     insert_blocks.extend(target_json)
 
+    # チャンネル用の共有設定 のブロック
     if target == "channel":
         display_json = read_json(f"{directory}/set_display.json")
         insert_blocks.extend(display_json)
@@ -78,23 +97,33 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
     #TODO: 入力した時間と日程が有効かどうか確認する
 
     ack()
+
+    # モーダルを更新する
     client.views_update(view=view_json,
                         hash=body["view"]["hash"],
                         view_id=body["view"]["id"])
 
 
 def check_users(values: dict) -> list:
+    """日程調整用 Modal の「回答者」の欄の ユーザー を取得する．"""
+
     return values["users_select"]["multi_users_select-action"]["selected_users"]
 
 
 def check_channels(values: dict) -> list:
+    """日程調整用 Modal の「回答者」の欄の チャンネル を取得する．"""
+
     return [list(values["channel_select"].values())[0]["selected_channel"]]
 
 
 def get_modal_inputs(body: dict, values: dict) -> dict:
+    """ 日程調整用 Modal の入力を取得する．"""
 
+    # 日付
     start_date = values["start_date"]["host_datepicker-action"]["selected_date"]
     end_date = values["end_date"]["host_datepicker-action"]["selected_date"]
+    
+    # 時間
     start_time = values["start_time"]["host_timepicker-action"]["selected_time"]
     end_time = values["end_time"]["host_timepicker-action"]["selected_time"]
 
@@ -109,6 +138,7 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
         "end_time" : end_time
     }
     
+    # チャンネル用　の回答共有設定
     if "display_result" in values:
         setting = values["display_result"]["result-option"]["selected_option"]
         modal_inputs["setting"] = setting["text"]["text"]
@@ -118,10 +148,12 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 
 
 def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
+    """日程調整用 Modal の 提出を確認する．"""
 
     values = view["state"]["values"]
     modal_inputs = get_modal_inputs(body, values)
 
+    # チャンネル・個人用 の確認
     target = body["view"]["callback_id"]
     if target == 'set_schedules-im':
         modal_inputs["send_lists"] = check_users(values)
@@ -129,10 +161,13 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
         modal_inputs["send_lists"] = check_channels(values)
 
     ack()
+
+    # メッセージを送信
     send_message(modal_inputs, client)
 
 
 def send_message(inputs: dict, client: WebClient):
+    """選択した回答者宛に メッセージ を送る．"""   
 
     message_json = read_json("./message/from_host.json")
 
@@ -145,6 +180,8 @@ def send_message(inputs: dict, client: WebClient):
 
     detail_json = read_json("./message/schedule_detail.json")
     detail_json.extend(message_json[3:-1])
+    
+    # 主催者 に作成した調整を送信する
     response = client.chat_postMessage(channel=inputs["host_id"],
                             text="メッセージを確認してください",
                             blocks=detail_json,
@@ -153,7 +190,7 @@ def send_message(inputs: dict, client: WebClient):
     message_json[-1]["elements"][0]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
     message_json[-1]["elements"][1]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
 
-    # 選択したユーザ・チャンネルにメッセージを投稿する
+    # 選択したユーザ・チャンネル にメッセージを送信する
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
                                 text="メッセージを確認してください",
