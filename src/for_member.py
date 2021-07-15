@@ -23,6 +23,7 @@ def open_modal(ack: Ack, body: dict, client: WebClient):
         trigger_id = body["trigger_id"],
         view = view_json)
 
+
 def insert_block(body: dict) -> list:
 
     insert_blocks=[]
@@ -136,12 +137,10 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 
     host = "<@" + body["user"]["id"] + ">"
     targets = values["target_select"]["static_select-action"]["selected_option"]["value"]
-
     dates,date = {}, "date"
-    for item in values:
 
-        if item == "target_select":
-            break
+    date_list = sorted(list(values.keys()))[:-1]
+    for item in date_list:
 
         temp = values[item]
         if date not in item:
@@ -160,23 +159,14 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
     return {
         "host" : host,
         "send_lists" : [targets],
-        "available_date" : dates
+        "available_date" : dates,
+        "member" : body["user"]["id"]
     }
 
 
-def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
+def get_message(value: str, client: WebClient):
 
-    values = view["state"]["values"]
-    
-    ack()
-    send_message(ack, get_modal_inputs(body, values), client)
-
-def send_host(ack: Ack, body: dict, client: WebClient):
-
-    target_channel, host, post_time = body["actions"][0]["value"].split('-')
-    member = body["user"]["id"]
-
-    ack()
+    target_channel, host, post_time = value.split('-')
 
     # Target message
     message_list = client.conversations_history(
@@ -186,7 +176,7 @@ def send_host(ack: Ack, body: dict, client: WebClient):
         limit=1)["messages"]
     
     if message_list == []:
-        return
+        return None
 
     message_info = message_list[0]
     target_message = message_info["ts"]
@@ -199,28 +189,75 @@ def send_host(ack: Ack, body: dict, client: WebClient):
         reply_content = client.conversations_replies(
             channel = target_channel,
             ts = message_info["thread_ts"],
-        )["messages"][-1]
+            )["messages"][-1]
 
         target_message = reply_content["ts"]
         message_content = reply_content["blocks"][0]["text"]["text"]
 
+    return {
+        "thread_present" : thread_present,
+        "channel" : target_channel,
+        "ts" : target_message,
+        "message" :message_content,
+    }
 
-    message_json = read_json("./message/from_member.json")
+
+def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
+
+    values = view["state"]["values"]
+    inputs = get_modal_inputs(body,values)
+
+    ack()    
+    secret_value = values["target_select"]["static_select-action"]["selected_option"]["value"]
+    send_answer(inputs,secret_value,client)
+
+
+def send_answer(inputs: dict, secret_value: str, client: WebClient):
+    
+    result = get_message(secret_value,client)
+
+    message_json = read_json("./message/from_member-yes.json")
+    message_json[0]["text"]["text"] = message_json[0]["text"]["text"].replace("I",f"<@{inputs['member']}>")
+
+    if result["thread_present"]:
+        message_json[0]["text"]["text"] += f"\n{result['message']}"
+    
+    send_host(
+        thread=result["thread_present"],
+        target_channel=result["channel"],
+        target_message=result["ts"],
+        input_block=message_json,
+        client=client
+    )
+
+    # モーダルの入力を表示する
+    print(f"\n\nモーダルの入力")
+    pprint({"result" : inputs['available_date']})
+
+
+def send_not_answer(ack: Ack, body: dict, client: WebClient):
+
+    member = body["user"]["id"]
+    secret_value = body["actions"][0]["value"]
+    result = get_message(secret_value, client)
+
+    message_json = read_json("./message/from_member-no.json")
     message_json[0]["text"]["text"] = message_json[0]["text"]["text"].replace("I",f"<@{member}>")
     
-    if thread_present:
-        message_json[0]["text"]["text"] += f"\n{message_content}"
+    if result["thread_present"]:
+        message_json[0]["text"]["text"] += f"\n{result['message']}"
     
-    send_message(
-        thread=thread_present,
-        target_channel=target_channel,
-        target_message=target_message,
+    ack()
+    send_host(
+        thread=result["thread_present"],
+        target_channel=result["channel"],
+        target_message=result["ts"],
         input_block=message_json,
         client=client
     )
 
 
-def send_message(thread: bool, target_channel: str, target_message: str, input_block: dict, client: WebClient):
+def send_host(thread: bool, target_channel: str, target_message: str, input_block: dict, client: WebClient):
 
     if thread:
         client.chat_update(
@@ -237,12 +274,13 @@ def send_message(thread: bool, target_channel: str, target_message: str, input_b
             thread_ts = target_message,
             as_user = True)
 
+
 def register(app):
     logger.info("register")
     
     # メッセージのクリック時
     app.action("answer_schedule")(open_modal)
-    app.action("not_answer")(send_host)
+    app.action("not_answer")(send_not_answer)
 
     # 「追加」ボタンのクリック時
     app.action("member-add_date")(update_modal)
