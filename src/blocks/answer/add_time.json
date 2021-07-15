@@ -21,20 +21,6 @@
                 "emoji": true
             },
             "action_id": "member_end-timepicker-action"
-        },
-        {
-            "type": "checkboxes",
-            "options": [
-                {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "終日週可能",
-                        "emoji": true
-                    },
-                    "value": "all"
-                }
-            ],
-            "action_id": "member_check-action"
         }
     ]
 }

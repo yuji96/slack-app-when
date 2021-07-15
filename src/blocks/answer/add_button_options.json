@@ -1,0 +1,25 @@
+{
+    "type": "actions",
+    "elements": [
+        {
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": "終日可能",
+                "emoji": true
+            },
+            "value": "yes",
+            "action_id": "click_option-yes"
+        },
+        {
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": "参加不可能",
+                "emoji": true
+            },
+            "value": "no",
+            "action_id": "click_option-no"
+        }
+    ]
+}
