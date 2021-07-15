@@ -1,3 +1,5 @@
+"""　スケジュール調整に参加する為の機能 """
+
 import pandas as pd
 
 from slack_bolt import Ack
@@ -14,36 +16,45 @@ logger = set_logger(__name__)
 
 
 def open_modal(ack: Ack, body: dict, client: WebClient):
+    """回答用 Modal を表示する．"""
 
     view_json = read_json("./modals/answer_schedule.json")
+
+    #　モーダルのブロック を追加
     view_json["blocks"], time = insert_block(body)
 
     ack()
+
+    # モーダルを開く
     client.views_open(
         trigger_id = body["trigger_id"],
         view = view_json)
 
 
 def insert_block(body: dict) -> list:
+    """回答用 Modal のブロックを追加する．"""
 
     insert_blocks=[]
     values = {}
 
+    # [主催者、日、時間、設定] をメッセージから取得する
     items = [ 'host', 'date', 'time', 'setting' ]
     for item in body["message"]["blocks"] :
         if "block_id" in item and item["block_id"] in items:
             values[ item["block_id"] ] = item["text"]["text"].split("\n")[1]
 
+    # 開催日から終了日の間　の日付を生成する
     dates = values["date"].split(" から ")
     values["date"] = [ str(item.date()) for 
         item in list(pd.date_range(dates[0],dates[1])) ]
 
+    # 時間選択　のブロック
     for item in values["date"]:
         insert_blocks.extend(generate_block(item,values["time"],1))
 
+    # 主催者宛　のブロック
     option_json=read_json("./answer/add_option.json")
     option_json["value"] = body["actions"][-1]["value"]
-    
     users_json=read_json("./answer/add_user.json")
     users_json[-1]["element"]["initial_option"]=option_json
     users_json[-1]["element"]["options"].append(option_json)
@@ -54,6 +65,7 @@ def insert_block(body: dict) -> list:
 
 
 def generate_block(date: str, time: str, num: int) -> list:
+    """回答用 Modal のブロックを追加する．"""
 
     divider_block = {"type": "divider"}
 
@@ -65,6 +77,7 @@ def generate_block(date: str, time: str, num: int) -> list:
 
 
 def generate_date_block(date: str,time: str) -> dict:
+   """回答用 Modal の日にちのブロックを追加する．"""
 
     date_block = read_json("./answer/add_date.json")
     date_block["block_id"] = date
@@ -75,6 +88,7 @@ def generate_date_block(date: str,time: str) -> dict:
 
 
 def generate_time_block(date: str, time: str, num: int)  -> dict:
+    """回答用 Modal の時間選択のブロックを追加する．"""
 
     start_time,end_time =  time.split(" から ")
 
@@ -87,19 +101,25 @@ def generate_time_block(date: str, time: str, num: int)  -> dict:
 
 
 def update_modal(ack: Ack, body: dict, client: WebClient):
+    """回答用 Modal のブロックを更新する．"""
 
+    view_json = read_json("./modals/answer_schedule.json")
     target_blocks = body["view"]["blocks"]
     action = body["actions"][0]["action_id"]
 
+    # 時間設定のブロック　を追加する
     if action == "member-add_date":
         target_blocks = update_option(body)
+
+    # 入力した時間 に設定する
     else:
         target_blocks = update_time(body)
 
-    view_json = read_json("./modals/answer_schedule.json")
     view_json["blocks"] = target_blocks
 
     ack()
+
+    # モーダルを　更新する
     client.views_update(
         view = view_json,
         hash = body["view"]["hash"],
@@ -107,6 +127,7 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
 
 
 def update_option(body: dict) -> dict:
+    """回答用 Modal の時間選択ブロックを追加更新する．"""
 
     target_date = body["actions"][0]["block_id"]
     temp = body["view"]["blocks"]
@@ -126,6 +147,7 @@ def update_option(body: dict) -> dict:
 
 
 def update_time(body: dict) -> dict:
+    """回答用 Modal の時間選択ブロックを更新する．"""
 
     #TODO:　入力した時間が有効か確認する
     #TODO:　重複しているか確認
@@ -134,11 +156,14 @@ def update_time(body: dict) -> dict:
 
 
 def get_modal_inputs(body: dict, values: dict) -> dict:
+    """回答用 Modal の 入力を取得する．"""
+
 
     host = "<@" + body["user"]["id"] + ">"
     targets = values["target_select"]["static_select-action"]["selected_option"]["value"]
     dates,date = {}, "date"
 
+    # 入力した日時を取得する
     date_list = sorted(list(values.keys()))[:-1]
     for item in date_list:
 
@@ -165,6 +190,7 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 
 
 def get_message(value: str, client: WebClient):
+    """主催者の スケージュール調整詳細メッセージ を取得する"""
 
     target_channel, host, post_time = value.split('-')
 
@@ -203,17 +229,21 @@ def get_message(value: str, client: WebClient):
 
 
 def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
+    """回答用 Modal の提出を確認する．"""
 
     values = view["state"]["values"]
     inputs = get_modal_inputs(body,values)
-
-    ack()    
     secret_value = values["target_select"]["static_select-action"]["selected_option"]["value"]
+
+    ack()
+    
+    #　メッセージを送信する
     send_answer(inputs,secret_value,client)
 
 
 def send_answer(inputs: dict, secret_value: str, client: WebClient):
-    
+    """回答用 Modal の提出を確認メッセージを送信する．"""
+
     result = get_message(secret_value,client)
 
     message_json = read_json("./message/from_member-yes.json")
@@ -222,6 +252,7 @@ def send_answer(inputs: dict, secret_value: str, client: WebClient):
     if result["thread_present"]:
         message_json[0]["text"]["text"] += f"\n{result['message']}"
     
+    # 主催者にメッセージを送信する
     send_host(
         thread=result["thread_present"],
         target_channel=result["channel"],
@@ -236,6 +267,7 @@ def send_answer(inputs: dict, secret_value: str, client: WebClient):
 
 
 def send_not_answer(ack: Ack, body: dict, client: WebClient):
+    """参加できない　と主催者に送信する．"""
 
     member = body["user"]["id"]
     secret_value = body["actions"][0]["value"]
@@ -248,6 +280,8 @@ def send_not_answer(ack: Ack, body: dict, client: WebClient):
         message_json[0]["text"]["text"] += f"\n{result['message']}"
     
     ack()
+
+    # 主催者にメッセージを送信する
     send_host(
         thread=result["thread_present"],
         target_channel=result["channel"],
@@ -258,7 +292,9 @@ def send_not_answer(ack: Ack, body: dict, client: WebClient):
 
 
 def send_host(thread: bool, target_channel: str, target_message: str, input_block: dict, client: WebClient):
+    """ 主催者に送る """
 
+    # スレッドの確認
     if thread:
         client.chat_update(
             channel = target_channel,

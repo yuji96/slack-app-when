@@ -117,7 +117,7 @@ def check_channels(values: dict) -> list:
 
 
 def get_modal_inputs(body: dict, values: dict) -> dict:
-    """ 日程調整用 Modal の入力を取得する．"""
+    """日程調整用 Modal の入力を取得する．"""
 
     # 日付
     start_date = values["start_date"]["host_datepicker-action"]["selected_date"]
@@ -148,7 +148,7 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 
 
 def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
-    """日程調整用 Modal の 提出を確認する．"""
+    """日程調整用 Modal の提出を確認する．"""
 
     values = view["state"]["values"]
     modal_inputs = get_modal_inputs(body, values)
