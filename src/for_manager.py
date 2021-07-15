@@ -46,7 +46,7 @@ def open_modal(ack: Ack, body: dict, client: WebClient, view: dict) -> dict:
     view_json["callback_id"] = target_id
 
     #　モーダルのブロック を追加
-    view_json["blocks"]　=　insert_block(target)    
+    view_json["blocks"] = insert_block(target)    
 
     ack()
     
