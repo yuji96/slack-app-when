@@ -10,6 +10,8 @@ load_dotenv(join(dirname(__file__), '../.env'))
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 PORT = int(os.environ.get("PORT", 3000))
+TMP_DIR = os.environ.get("TMP_DIR", join(dirname(__file__), './tmp/'))
+
 
 
 def set_logger(name, level="INFO"):
