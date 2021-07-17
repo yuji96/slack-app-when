@@ -51,21 +51,22 @@ class Table:
     data: dataclasses.InitVar[dict]
     name: str
     date_pair: Union[tuple[dt.date, dt.date], StartEnd]
-    time_pair: Union[tuple[dt.date, dt.date], StartEnd]
+    time_pair: Union[tuple[dt.time, dt.time], StartEnd]
     df: dataclasses.InitVar[Optional[pd.DataFrame]] = None
 
     slots: list = dataclasses.field(init=False, default_factory=list)
 
     def __post_init__(self, data, df):
         self.date_pair = StartEnd(*self.date_pair)
-        self.time_pair = StartEnd(*self.time_pair)
+        start, end = self.time_pair
+        self.time_pair = StartEnd(start.replace(minute=0), end)
         for date, text in data.items():
             self.slots.extend(self.input_to_datetime(date, text))
 
         if isinstance(df, pd.DataFrame):
-            self.df = df
+            self.df = self.update_df(df)
         else:
-            self.df = self.create_time_table()
+            self.df = self.create_df()
 
     @staticmethod
     def input_to_datetime(date: dt.datetime, text: str):
@@ -99,20 +100,31 @@ class Table:
                 raise ValueError(f"`{str_start}-{str_end}` の入力が正しくありません。")
             yield (start, end)
 
-    def create_time_table(self):
+    def create_df(self):
         """空いている時間の表を作成する．"""
-        start = dt.datetime.combine(self.date_pair.start, self.time_pair.start.replace(minute=0))
+        start = dt.datetime.combine(self.date_pair.start, self.time_pair.start)
         end = dt.datetime.combine(self.date_pair.end, self.time_pair.end)
 
         index = pd.date_range(start, end, freq=dt.timedelta(minutes=30))
-        single = pd.DataFrame({self.name: False}, index=index)
-        single.columns.set_names("name", inplace=True)
+        df = pd.DataFrame({self.name: False}, index=index)
+        df.columns.set_names("name", inplace=True)
         for s, e in self.slots:
-            single.loc[s:e, self.name] = True
-        single.set_index([index.date, index.time], inplace=True)
-        single.index.set_names(["date", "time"], inplace=True)
+            df.loc[s:e, self.name] = True  # TODO: `-6:01`という回答が`6:00-6:30`と解釈される．
+        return df
 
-        table = single.unstack(level="time").stack(level="name").loc[:, start.time():end.time()]
+    def update_df(self, df: pd.DataFrame):
+        df[self.name] = False
+        for s, e in self.slots:
+            df.loc[s:e, self.name] = True
+        return df
+
+    def convert_to_table(self):
+        df = self.df
+        df.set_index([df.index.date, df.index.time], inplace=True)
+        df.index.set_names(["date", "time"], inplace=True)
+
+        start, end = self.time_pair
+        table = df.unstack(level="time").stack(level="name").loc[:, start:end]
         return table.astype(bool)
 
     def visualize(self):
@@ -127,9 +139,10 @@ class Table:
 
 
 if __name__ == "__main__":
-    data = {dt.date(2021, 7, 10): '9 : 00 -11 : 00, 14:30  ~ 18:00'}
-    name = "yuji"
-    date_pair = (dt.date(2021, 7, 8), dt.date(2021, 7, 12))
-    time_pair = (dt.time(6, 00), dt.time(22, 00))
-    table = Table(data, name, date_pair, time_pair)
-    table.visualize()
+    host_setting = dict(date_pair=(dt.date(2021, 7, 8), dt.date(2021, 7, 12)),
+                        time_pair=(dt.time(6, 00), dt.time(22, 00)))
+    table1 = Table(data={dt.date(2021, 7, 10): '7 : 00 -11 : 00, 14:30  ~ 21:00'},
+                   name="one", **host_setting)
+    table2 = Table(data = {dt.date(2021, 7, 10): '6 : 00 -6 : 45, 14:30  ~ 18:00'},
+                   name = "two", **host_setting, df=table1.df)
+    tmp = table2.convert_to_table()
