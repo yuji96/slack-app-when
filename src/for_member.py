@@ -2,7 +2,7 @@ from collections import namedtuple
 import dataclasses
 import datetime as dt
 import re
-from typing import Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -101,18 +101,16 @@ class Table:
 
     def create_time_table(self):
         """空いている時間の表を作成する．"""
-        # TODO: 強制的に30分区切りにする処理を追加する．
-        start = dt.datetime.combine(self.date_pair.start, dt.time())
+        start = dt.datetime.combine(self.date_pair.start, self.time_pair.start.replace(minute=0))
         end = dt.datetime.combine(self.date_pair.end, self.time_pair.end)
 
         index = pd.date_range(start, end, freq=dt.timedelta(minutes=30))
-        single = pd.Series(False, index=index)
+        single = pd.DataFrame({self.name: False}, index=index)
         for s, e in self.slots:
-            single[s:e] = True
-
-        single.set_axis([index.date, index.time], axis="index", inplace=True)
-        # ここで切り取ってるから30分区切りにする必要はない．
-        table = single.unstack().loc[:, start.time():end.time()]
+            single.loc[s:e, self.name] = True
+        single.set_index([pd.Index(index.date, name="date"),
+                          pd.Index(index.time, name="time")], inplace=True)
+        table = single.unstack(level="time").stack(level=0).loc[:, start.time():end.time()]
         return table.astype(bool)
 
     def visualize(self):
@@ -123,7 +121,7 @@ class Table:
         sns.heatmap(self.df, cbar=False, square=True,
                     cmap="Blues", alpha=0.7,
                     linecolor="grey", linewidths=0.2)
-        plt.savefig(f"{TMP_DIR}/table.png")
+        # plt.savefig(f"{TMP_DIR}/table.png")
 
 
 if __name__ == "__main__":
