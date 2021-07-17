@@ -106,11 +106,13 @@ class Table:
 
         index = pd.date_range(start, end, freq=dt.timedelta(minutes=30))
         single = pd.DataFrame({self.name: False}, index=index)
+        single.columns.set_names("name", inplace=True)
         for s, e in self.slots:
             single.loc[s:e, self.name] = True
-        single.set_index([pd.Index(index.date, name="date"),
-                          pd.Index(index.time, name="time")], inplace=True)
-        table = single.unstack(level="time").stack(level=0).loc[:, start.time():end.time()]
+        single.set_index([index.date, index.time], inplace=True)
+        single.index.set_names(["date", "time"], inplace=True)
+
+        table = single.unstack(level="time").stack(level="name").loc[:, start.time():end.time()]
         return table.astype(bool)
 
     def visualize(self):
