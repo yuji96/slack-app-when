@@ -1,0 +1,62 @@
+{
+  "_metadata": {
+    "major_version": 1,
+    "minor_version": 1
+  },
+  "display_information": {
+    "name": null, // your bot name
+    "description": "ミーティングの細かい時間調整をサポートします。",
+    "background_color": "#0000AA"
+  },
+  "features": {
+    "app_home": {
+      "home_tab_enabled": true,
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": true
+    },
+    "bot_user": {
+      "display_name": null, // your bot name
+      "always_online": true
+    },
+    "shortcuts": [
+      {
+        "name": "時間調整を始める : チャンネル",
+        "type": "global",
+        "callback_id": "set_schedules_channel",
+        "description": "チャンネル全体用の時間調整"
+      },
+      {
+        "name": "調整を始める : 個人",
+        "type": "global",
+        "callback_id": "set_schedules_im",
+        "description": "個人用の時間調整"
+      }
+    ]
+  },
+  "oauth_config": {
+    "redirect_urls": [
+      "https://example.com/slack/auth"
+    ],
+    "scopes": {
+      "bot": [
+        "chat:write",
+        "chat:write.public",
+        "commands"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": null, // your URL
+      "bot_events": [
+        "app_home_opened"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": null // your URL
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false
+  }
+}
