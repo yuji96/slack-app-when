@@ -118,24 +118,36 @@ class Table:
             df.loc[s:e, self.name] = True
         return df
 
-    def convert_to_table(self):
+    def visualize(self):
+        # TODO: レイアウトの調整
+        table = self.table
+        # w = len(table.columns)
+        # figsize = np.array(table.T.shape) * 10.5 / w
+        dates = table.index.get_level_values("date").unique()
+        _, axes = plt.subplots(nrows=dates.size, sharex=True)
+        for i, (ax, date) in enumerate(zip(axes, dates)):
+            g = sns.heatmap(table.loc[(date, slice(None))],
+                            ax=ax, square=True,
+                            cbar=False, cmap=["white", "lightblue", "lightgreen"],
+                            linecolor="grey", linewidths=0.2)
+            g.set_title(date)
+            g.set(xlabel=None, ylabel=None)
+            g.tick_params(bottom=False, left=False, right=False, top=False)
+        g.set_xticklabels(table.columns.map(lambda t: str(t.hour) if t.minute == 0 else ""),
+                          rotation=0)
+        plt.tight_layout()
+        plt.show()
+        # plt.savefig(f"{TMP_DIR}/table.png")
+
+    @property
+    def table(self):
         df = self.df
         df.set_index([df.index.date, df.index.time], inplace=True)
         df.index.set_names(["date", "time"], inplace=True)
 
         start, end = self.time_pair
         table = df.unstack(level="time").stack(level="name").loc[:, start:end]
-        return table.astype(bool)
-
-    def visualize(self):
-        # TODO: レイアウトの調整
-        w = len(self.df.columns)
-        figsize = np.array(self.df.T.shape) * 10.5 / w
-        fig, ax = plt.subplots(figsize=figsize)
-        sns.heatmap(self.df, cbar=False, square=True,
-                    cmap="Blues", alpha=0.7,
-                    linecolor="grey", linewidths=0.2)
-        # plt.savefig(f"{TMP_DIR}/table.png")
+        return table.astype(int) + table.groupby(level="date").all()
 
 
 if __name__ == "__main__":
