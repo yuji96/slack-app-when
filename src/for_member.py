@@ -143,6 +143,6 @@ if __name__ == "__main__":
                         time_pair=(dt.time(6, 00), dt.time(22, 00)))
     table1 = Table(data={dt.date(2021, 7, 10): '7 : 00 -11 : 00, 14:30  ~ 21:00'},
                    name="one", **host_setting)
-    table2 = Table(data = {dt.date(2021, 7, 10): '6 : 00 -6 : 45, 14:30  ~ 18:00'},
-                   name = "two", **host_setting, df=table1.df)
+    table2 = Table(data={dt.date(2021, 7, 10): '6 : 00 -6 : 45, 14:30  ~ 18:00'},
+                   name="two", **host_setting, df=table1.df)
     tmp = table2.convert_to_table()

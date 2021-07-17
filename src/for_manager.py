@@ -75,6 +75,7 @@ def check_channels(ack: Ack, body: dict, client: WebClient, view: dict):
 
     send_message(ack, modal_inputs, client)
 
+
 def get_modal_inputs(body: dict, values: dict):
 
     start_date = values["start_date"]["datepicker-action"]["selected_date"]
@@ -82,10 +83,10 @@ def get_modal_inputs(body: dict, values: dict):
     start_time = values["start_time"]["timepicker-action"]["selected_time"]
     end_time = values["end_time"]["timepicker-action"]["selected_time"]
     modal_inputs = {
-        "host" : "<@"+body["user"]["id"]+">",
-        "date" : start_date + " から " + end_date,
-        "time" : start_time + " から " + end_time,
-        "setting" : values["display_result"]["result-option"]["selected_option"]["text"]["text"]
+        "host": "<@"+body["user"]["id"]+">",
+        "date": start_date + " から " + end_date,
+        "time": start_time + " から " + end_time,
+        "setting": values["display_result"]["result-option"]["selected_option"]["text"]["text"]
     }
 
     return modal_inputs
@@ -99,8 +100,8 @@ def send_message(ack: Ack, inputs: dict, client: WebClient):
 
     for item in message_json:
         if "block_id" in item:
-            item["text"]["text"]+=inputs[item["block_id"]]
-    
+            item["text"]["text"] += inputs[item["block_id"]]
+
     # 選択したユーザ・チャンネルにメッセージを投稿する
 
     for item in inputs["send_lists"]:
