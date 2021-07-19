@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 slack-bolt = "*"
 coloredlogs = "*"
+pandas = "*"
+seaborn = "*"
 
 [dev-packages]
 python-dotenv = "*"
