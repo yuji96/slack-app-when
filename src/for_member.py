@@ -1,8 +1,8 @@
-"""　スケジュール調整に参加する為の機能 """
-
+from collections import namedtuple
 import dataclasses
 import datetime as dt
 import re
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -467,21 +467,30 @@ def register(app):
 # utilities
 ##########################################
 
+StartEnd = namedtuple('StartEnd', ['start', 'end'])
+
 
 @dataclasses.dataclass
 class Table:
     data: dataclasses.InitVar[dict]
     name: str
-    date_pair: tuple[dt.date, dt.date]
-    time_pair: tuple[dt.time, dt.time]
+    date_pair: Union[tuple[dt.date, dt.date], StartEnd]
+    time_pair: Union[tuple[dt.time, dt.time], StartEnd]
+    df: dataclasses.InitVar[Optional[pd.DataFrame]] = None
 
     slots: list = dataclasses.field(init=False, default_factory=list)
-    df: pd.DataFrame = dataclasses.field(init=False)
 
-    def __post_init__(self, data):
+    def __post_init__(self, data, df):
+        self.date_pair = StartEnd(*self.date_pair)
+        start, end = self.time_pair
+        self.time_pair = StartEnd(start.replace(minute=0), end)
         for date, text in data.items():
             self.slots.extend(self.input_to_datetime(date, text))
-        self.df = self.create_time_table()
+
+        if isinstance(df, pd.DataFrame):
+            self.df = self.update_df(df)
+        else:
+            self.df = self.create_df()
 
     @staticmethod
     def input_to_datetime(date: dt.datetime, text: str):
@@ -515,36 +524,61 @@ class Table:
                 raise ValueError(f"`{str_start}-{str_end}` の入力が正しくありません。")
             yield (start, end)
 
-    def create_time_table(self):
+    def create_df(self):
         """空いている時間の表を作成する．"""
-        # TODO: 強制的に30分区切りにする処理を追加する．
-        start = dt.datetime.combine(self.date_pair[0], self.time_pair[0])
-        end = dt.datetime.combine(self.date_pair[1], self.time_pair[1])
+        start = dt.datetime.combine(self.date_pair.start, self.time_pair.start)
+        end = dt.datetime.combine(self.date_pair.end, self.time_pair.end)
 
         index = pd.date_range(start, end, freq=dt.timedelta(minutes=30))
-        single = pd.Series(False, index=index)
+        df = pd.DataFrame({self.name: False}, index=index)
+        df.columns.set_names("name", inplace=True)
         for s, e in self.slots:
-            single[s:e] = True
+            df.loc[s:e, self.name] = True  # TODO: `-6:01`という回答が`6:00-6:30`と解釈される．
+        return df
 
-        single.set_axis([index.date, index.time], axis="index", inplace=True)
-        table = single.unstack().loc[:, start.time():end.time()]
-        return table.astype(bool)
+    def update_df(self, df: pd.DataFrame):
+        df[self.name] = False
+        for s, e in self.slots:
+            df.loc[s:e, self.name] = True
+        return df
 
     def visualize(self):
         # TODO: レイアウトの調整
-        w = len(self.df.columns)
-        figsize = np.array(self.df.T.shape) * 10.5 / w
-        fig, ax = plt.subplots(figsize=figsize)
-        sns.heatmap(self.df, cbar=False, square=True,
-                    cmap="Blues", alpha=0.7,
-                    linecolor="grey", linewidths=0.2)
-        plt.savefig(f"{TMP_DIR}/table.png")
+        table = self.table
+        # w = len(table.columns)
+        # figsize = np.array(table.T.shape) * 10.5 / w
+        dates = table.index.get_level_values("date").unique()
+        _, axes = plt.subplots(nrows=dates.size, sharex=True)
+        for i, (ax, date) in enumerate(zip(axes, dates)):
+            g = sns.heatmap(table.loc[(date, slice(None))],
+                            ax=ax, square=True,
+                            cbar=False, cmap=["white", "lightblue", "lightgreen"],
+                            linecolor="grey", linewidths=0.2)
+            g.set_title(date)
+            g.set(xlabel=None, ylabel=None)
+            g.tick_params(bottom=False, left=False, right=False, top=False)
+        g.set_xticklabels(table.columns.map(lambda t: str(t.hour) if t.minute == 0 else ""),
+                          rotation=0)
+        plt.tight_layout()
+        plt.show()
+        # plt.savefig(f"{TMP_DIR}/table.png")
+
+    @property
+    def table(self):
+        df = self.df
+        df.set_index([df.index.date, df.index.time], inplace=True)
+        df.index.set_names(["date", "time"], inplace=True)
+
+        start, end = self.time_pair
+        table = df.unstack(level="time").stack(level="name").loc[:, start:end]
+        return table.astype(int) + table.groupby(level="date").all()
 
 
 if __name__ == "__main__":
-    data = {dt.date(2021, 7, 10): '9 : 00 -11 : 00, 14:30  ~ 18:00'}
-    name = "yuji"
-    date_pair = (dt.date(2021, 7, 8), dt.date(2021, 7, 12))
-    time_pair = (dt.time(6, 00), dt.time(22, 00))
-    table = Table(data, name, date_pair, time_pair)
-    table.visualize()
+    host_setting = dict(date_pair=(dt.date(2021, 7, 8), dt.date(2021, 7, 12)),
+                        time_pair=(dt.time(6, 00), dt.time(22, 00)))
+    table1 = Table(data={dt.date(2021, 7, 10): '7 : 00 -11 : 00, 14:30  ~ 21:00'},
+                   name="one", **host_setting)
+    table2 = Table(data={dt.date(2021, 7, 10): '6 : 00 -6 : 45, 14:30  ~ 18:00'},
+                   name="two", **host_setting, df=table1.df)
+    tmp = table2.convert_to_table()

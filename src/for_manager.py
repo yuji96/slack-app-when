@@ -86,6 +86,22 @@ def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     send_message(modal_inputs, client)
 
 
+def get_modal_inputs(body: dict, values: dict):
+
+    start_date = values["start_date"]["datepicker-action"]["selected_date"]
+    end_date = values["end_date"]["datepicker-action"]["selected_date"]
+    start_time = values["start_time"]["timepicker-action"]["selected_time"]
+    end_time = values["end_time"]["timepicker-action"]["selected_time"]
+    modal_inputs = {
+        "host": "<@"+body["user"]["id"]+">",
+        "date": start_date + " から " + end_date,
+        "time": start_time + " から " + end_time,
+        "setting": values["display_result"]["result-option"]["selected_option"]["text"]["text"]
+    }
+
+    return modal_inputs
+
+
 def send_message(inputs: dict, client: WebClient):
     """選択した回答者宛に メッセージ を送る．"""
 
