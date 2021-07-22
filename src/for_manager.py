@@ -110,37 +110,6 @@ def check_channels(values: dict) -> list:
     return [list(values["channel_select"].values())[0]["selected_channel"]]
 
 
-def get_modal_inputs(body: dict, values: dict) -> dict:
-    """日程調整用 Modal の入力を取得する．"""
-
-    # 日付
-    start_date = values["start_date"]["host_datepicker-action"]["selected_date"]
-    end_date = values["end_date"]["host_datepicker-action"]["selected_date"]
-
-    # 時間
-    start_time = values["start_time"]["host_timepicker-action"]["selected_time"]
-    end_time = values["end_time"]["host_timepicker-action"]["selected_time"]
-
-    modal_inputs = {
-        "host": "<@"+body["user"]["id"]+">",
-        "host_id": body["user"]["id"],
-        "date": start_date + " から " + end_date,
-        "time": start_time + " から " + end_time,
-        "start_date": start_date,
-        "end_date": end_date,
-        "start_time": start_time,
-        "end_time": end_time
-    }
-
-    # チャンネル用　の回答共有設定
-    if "display_result" in values:
-        setting = values["display_result"]["result-option"]["selected_option"]
-        modal_inputs["setting"] = setting["text"]["text"]
-        modal_inputs["setting_value"] = setting["value"]
-
-    return modal_inputs
-
-
 def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     """回答者宛にメッセージを送る．"""
 

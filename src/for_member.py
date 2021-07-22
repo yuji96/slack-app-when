@@ -5,7 +5,6 @@ import re
 from typing import Optional, Union
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from slack_bolt import Ack
@@ -13,7 +12,7 @@ from slack_sdk import WebClient
 
 from blocks import read_json
 from blocks.answer import AnswerModal
-from settings import set_logger, TMP_DIR
+from settings import set_logger
 
 # TODO: デバッグ用で開発後には削除する
 from pprint import pprint
