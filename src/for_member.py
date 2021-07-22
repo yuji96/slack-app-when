@@ -20,6 +20,7 @@ from pprint import pprint
 
 logger = set_logger(__name__)
 
+PATTERN = 2
 
 def open_modal(ack: Ack, body: dict, client: WebClient):
     """回答用 Modal を表示する．"""
@@ -38,7 +39,7 @@ def open_modal(ack: Ack, body: dict, client: WebClient):
 
 
 def insert_block(body: dict) -> list:
-    """回答用 Modal のブロックを追加する．"""
+    """回答用 Modal のブロックを編集する．"""
 
     insert_blocks = []
     values = {}
@@ -69,22 +70,20 @@ def generate_block(date: str, time: str, num: int) -> list:
 
     divider_block = {"type": "divider"}
 
-    # Pattern 1
-    pattern = [divider_block,
-               generate_date_block(date, time),
-               generate_time_block(date, time, num),
-               generate_options_block(date, "None")]
-
-    # Pattern 2
-    pattern = [divider_block,
-               generate_label_block(date, time),
-               generate_options_block(date)]
+    if PATTERN == 1:
+        # Pattern 1
+        pattern = [divider_block, generate_date_block(date,time), 
+            generate_time_block(date,time,num),generate_buttons_block(date,"None")]
+    elif PATTERN == 2:
+        # Pattern 2
+        pattern = [divider_block,generate_date_input_block(date,time),
+            generate_buttons_block(date)]
 
     return pattern
 
 
 def generate_date_block(date: str, time: str) -> dict:
-    """回答用 Modal の日にちのブロックを追加する．"""
+    """Pattern1 回答用 Modal の日にちのブロックを追加する．"""
 
     date_block = read_json("./answer/add_date.json")
     date_block["block_id"] = date
@@ -94,39 +93,44 @@ def generate_date_block(date: str, time: str) -> dict:
     return date_block
 
 
-def generate_time_block(date: str, time: str, num: int) -> dict:
-    """回答用 Modal の時間選択のブロックを追加する．"""
+def generate_date_input_block(date: str, time: str) -> dict:
+    """Pattern2 回答用 Modal の日にちのInputブロックを追加する．"""
 
-    start_time, end_time = time.split(" から ")
+    label_json = read_json("./answer/add_date-input.json")
+
+    label_json["block_id"] = date
+    label_json["label"]["text"] = label_json["label"]["text"].replace("date",date).replace("time",time)
+
+    return label_json
+
+
+def generate_date_section_block(date: str, time: str, initial: str) -> dict:
+    """Pattern2 回答用 Modal の日にちのSectionブロックを追加する．"""
+
+    label_json = read_json("./answer/add_date-section.json")
+
+    label_json["block_id"] = date
+    label_json["text"]["text"] = label_json["text"]["text"
+        ].replace("date",date).replace("time",time).replace("opt",initial)
+
+    return label_json
+
+
+def generate_time_block(date: str, time: str, num: int) -> dict:
+    """Pattern1 回答用 Modal の時間選択のブロックを追加する．"""
+
+    start_time,end_time =  time.split(" から ")
 
     time_block = read_json("./answer/add_time.json")
-    time_block["block_id"] = time_block["block_id"].replace("date", date).replace("opt", str(num))
+    time_block["block_id"] = time_block["block_id"].replace("date",date).replace("opt",str(num))
     time_block["elements"][0]["initial_time"] = start_time
     time_block["elements"][1]["initial_time"] = end_time
 
     return time_block
 
 
-def generate_label_block(date="", time=""):
-
-    label_json = read_json("./answer/add_date-text.json")
-
-    label_json["block_id"] = date
-    label_json["label"]["text"] = label_json["label"]["text"].replace("date", date).replace("time", time)
-
-    return label_json
-
-
-def generate_label_element(initial: str):
-
-    label_json = read_json("./answer/add_date-text-initial.json")
-
-    label_json["initial_value"] = initial
-
-    return label_json
-
-
-def generate_options_block(date: str, value="default"):
+def generate_buttons_block(date: str, value = "default") -> dict:
+    """Pattern2 回答用 Modal の時間選択のブロックを追加する．"""
 
     option_json = read_json("./answer/add_button_options.json")
     option_json["block_id"] = f"{date}-opt"
@@ -138,20 +142,22 @@ def generate_options_block(date: str, value="default"):
     return option_json
 
 
-def generate_description_block(value: str):
+def generate_description_block(value: str) -> dict:
+    """回答用 Modal の作者のブロックを追加する．"""
 
-    description_json = [read_json("./answer/add_description.json")]
-    description_json[0]["elements"][0]["text"] += f"<@{value.split('-')[1]}>"
-    description_json[0]["elements"][1]["alt_text"] = value
+    if PATTERN == 1:
+        # Pattern 1
+        host_json=read_json("./answer/add_host.json")
+        host_json["value"] = value
 
-    """
-    host_json=read_json("./answer/add_host.json")
-    host_json["value"] = value
-
-    description_json=read_json("./answer/add_user.json")
-    description_json[-1]["element"]["initial_option"]=host_json
-    description_json[-1]["element"]["options"].append(host_json)
-    """
+        description_json=read_json("./answer/add_user.json")
+        description_json[-1]["element"]["initial_option"]=host_json
+        description_json[-1]["element"]["options"].append(host_json)
+    elif PATTERN == 2:
+        # Pattern 2
+        description_json = [read_json("./answer/add_description.json")]
+        description_json[0]["elements"][0]["text"] += f"<@{value.split('-')[1]}>"
+        description_json[0]["elements"][1]["alt_text"] = value
 
     return description_json
 
@@ -164,57 +170,44 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
     target = body["actions"][0]["block_id"]
     action = body["actions"][0]["action_id"]
 
-    """
-    # Pattern 1
-    # 時間設定のブロック　を追加する
-    if action == "member-add_date":
-        target_blocks = update_option(body)
+    if PATTERN == 1:
+        # Pattern 1
+        # 時間設定のブロック　を追加する
+        if action == "member-add_date":
+            target_blocks = insert_time_block(body)
 
-    # 入力した時間 に設定する
-    else:
-        target_blocks = update_time(body)
-    """
+        # 入力した時間 に設定する
+        else:
+            target_blocks = update_time_input(body)
+        
+        view_json["blocks"] = target_blocks
 
-    # Pattern 2
-    if "click_option" in action:
+    elif PATTERN == 2:
+        # Pattern 2
+        if "click_option" in action:
 
-        button_select = action.split('-')[-1]
-        date = target.removesuffix("-opt")
+            button_select = action.split('-')[-1]
+            date = target.removesuffix("-opt")
 
-        for index, item in enumerate(view_json["blocks"]):
-            if item["block_id"] == target:
+            for index,item in enumerate(view_json["blocks"]):
+                if item["block_id"] == target:
+                    
+                    value = view_json["blocks"][index-1]
 
-                value = view_json["blocks"][index-1]["element"]
-
-                pprint(body)
-                if "initial_value" in value:
-                    condition = (
-                        (value["initial_value"] == "All" and button_select == "no") or
-                        (value["initial_value"] == "None" and button_select == "yes") or
-                        (value["initial_value"] not in ["All", "None"]))
-                else:
-                    condition = "initial_value" not in value
-                print(condition)
-                if condition:
-
-                    update_button_json = generate_options_block(date, button_select)
-                    body["view"]["state"]["values"][date]["plain_text_input-action"]["value"] = None
-
-                    if button_select == "yes":
-                        value = generate_label_element("All")
+                    condition = True
+                    if value["type"] == "section":
+                        text = value["text"]["text"].split('*')
+                        current_input, time = text[-2], text[3]
+                        condition = (
+                            (current_input == "終日可能" and button_select == "no") or
+                            (current_input == "参加不可能" and button_select == "yes"))
                     else:
-                        value = generate_label_element("None")
-                    view_json["blocks"][index-1]["element"] = value
+                        time = value["label"]["text"].split(" の ")[-1]
 
-                else:
-                    print(condition)
-                    update_button_json = generate_options_block(date)
-                    view_json["blocks"][index-1]["element"] = generate_label_block()["element"]
-
-                item["elements"] = update_button_json["elements"]
-                break
-
-        body["view"]["state"]["values"][date]["plain_text_input-action"]["value"] = value
+                    view_json["blocks"][index-1] = update_date_block(condition, value["block_id"], time, button_select)
+                    item["elements"] = update_button_block(condition, date, button_select)
+                    
+                    break
 
     ack()
 
@@ -225,8 +218,8 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
         view_id=body["view"]["id"])
 
 
-def update_option(body: dict) -> dict:
-    """回答用 Modal の時間選択ブロックを追加更新する．"""
+def insert_time_block(body: dict) -> dict:
+    """Pattern1 回答用 Modal の時間選択ブロックを追加更新する．"""
 
     target_date = body["actions"][0]["block_id"]
     temp = body["view"]["blocks"]
@@ -244,8 +237,34 @@ def update_option(body: dict) -> dict:
     return temp
 
 
-def update_time(body: dict) -> dict:
-    """回答用 Modal の時間選択ブロックを更新する．"""
+def update_date_block(check: bool, date: str, time: str, value: str):
+    """Pattern2 回答用 Modal の時間回答ブロックを追加更新する．"""
+
+    if check:
+
+        if value == "yes":
+            update_value = "終日可能"
+        else:
+            update_value = "参加不可能"
+        
+        return generate_date_section_block(date,time,update_value)
+    
+    else:
+
+        return generate_date_input_block(date,time)
+
+
+def update_button_block(check: bool, date: str, button_select: str):
+    """Pattern2 回答用 Modal のボタンブロックを追加更新する．"""
+
+    if check:
+        return generate_buttons_block(date,button_select)["elements"]
+    else:
+        return generate_buttons_block(date)["elements"]
+
+
+def update_time_input(body: dict) -> dict:
+    """Pattern1 回答用 Modal の時間選択ブロックを更新する．"""
 
     # TODO:　入力した時間が有効か確認する
     # TODO:　重複しているか確認
@@ -262,29 +281,29 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
     dates, date = {}, "date"
 
     # 入力した日時を取得する
-    """
-    # Pattern 1
-    date_list = sorted(list(values.keys()))
-    for item in date_list:
+    if PATTERN == 1:
+        # Pattern 1
+        date_list = sorted(list(values.keys()))
+        for item in date_list:
 
-        temp = values[item]
-        if date not in item:
-            date = item[:-2]
-            dates[date] = []
+            temp = values[item]
+            if date not in item:
+                date = item[:-2]
+                dates[date] = []
 
-        if temp["member_check-action"]["selected_options"] is None:
-            # TODO:終日用に設定する
-            sets = []
-        else:
-            sets = [ temp["member_start-timepicker-action"]["selected_time"],
-                     temp["member_end-timepicker-action"]["selected_time"] ]
+            if temp["member_check-action"]["selected_options"] is None:
+                # TODO:終日用に設定する
+                sets = []
+            else:
+                sets = [ temp["member_start-timepicker-action"]["selected_time"], 
+                        temp["member_end-timepicker-action"]["selected_time"] ]
 
-        dates[date].append(sets)
-    """
+            dates[date].append(sets)
 
-    # Pattern 2
-    for item in values:
-        dates[item] = values[item]["plain_text_input-action"]["value"]
+    elif PATTERN == 2:
+        # Pattern 2
+        for item in values:
+            dates[item] = values[item]["plain_text_input-action"]["value"]
 
     return {
         "target": target,
@@ -433,10 +452,10 @@ def register(app):
     app.action("member-add_date")(update_modal)
 
     # 時間の選択時
-    # app.action("member_start-timepicker-action")(update_modal)
-    # app.action("member_end-timepicker-action")(update_modal)
-    # app.action("member_check-action")(update_modal)
-
+    app.action("member_start-timepicker-action")(update_modal)
+    app.action("member_end-timepicker-action")(update_modal)
+    app.action("member_check-action")(update_modal)
+    
     app.action("click_option-yes")(update_modal)
     app.action("click_option-no")(update_modal)
 
