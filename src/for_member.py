@@ -22,6 +22,7 @@ logger = set_logger(__name__)
 
 PATTERN = 2
 
+
 def open_modal(ack: Ack, body: dict, client: WebClient):
     """回答用 Modal を表示する．"""
 
@@ -72,12 +73,12 @@ def generate_block(date: str, time: str, num: int) -> list:
 
     if PATTERN == 1:
         # Pattern 1
-        pattern = [divider_block, generate_date_block(date,time), 
-            generate_time_block(date,time,num),generate_buttons_block(date,"None")]
+        pattern = [divider_block, generate_date_block(date, time),
+                   generate_time_block(date, time, num), generate_buttons_block(date, "None")]
     elif PATTERN == 2:
         # Pattern 2
-        pattern = [divider_block,generate_date_input_block(date,time),
-            generate_buttons_block(date)]
+        pattern = [divider_block, generate_date_input_block(date, time),
+                   generate_buttons_block(date)]
 
     return pattern
 
@@ -99,7 +100,7 @@ def generate_date_input_block(date: str, time: str) -> dict:
     label_json = read_json("./answer/add_date-input.json")
 
     label_json["block_id"] = date
-    label_json["label"]["text"] = label_json["label"]["text"].replace("date",date).replace("time",time)
+    label_json["label"]["text"] = label_json["label"]["text"].replace("date", date).replace("time", time)
 
     return label_json
 
@@ -110,8 +111,7 @@ def generate_date_section_block(date: str, time: str, initial: str) -> dict:
     label_json = read_json("./answer/add_date-section.json")
 
     label_json["block_id"] = date
-    label_json["text"]["text"] = label_json["text"]["text"
-        ].replace("date",date).replace("time",time).replace("opt",initial)
+    label_json["text"]["text"] = label_json["text"]["text"].replace("date", date).replace("time", time).replace("opt", initial)
 
     return label_json
 
@@ -119,17 +119,17 @@ def generate_date_section_block(date: str, time: str, initial: str) -> dict:
 def generate_time_block(date: str, time: str, num: int) -> dict:
     """Pattern1 回答用 Modal の時間選択のブロックを追加する．"""
 
-    start_time,end_time =  time.split(" から ")
+    start_time, end_time = time.split(" から ")
 
     time_block = read_json("./answer/add_time.json")
-    time_block["block_id"] = time_block["block_id"].replace("date",date).replace("opt",str(num))
+    time_block["block_id"] = time_block["block_id"].replace("date", date).replace("opt", str(num))
     time_block["elements"][0]["initial_time"] = start_time
     time_block["elements"][1]["initial_time"] = end_time
 
     return time_block
 
 
-def generate_buttons_block(date: str, value = "default") -> dict:
+def generate_buttons_block(date: str, value="default") -> dict:
     """Pattern2 回答用 Modal の時間選択のブロックを追加する．"""
 
     option_json = read_json("./answer/add_button_options.json")
@@ -147,11 +147,11 @@ def generate_description_block(value: str) -> dict:
 
     if PATTERN == 1:
         # Pattern 1
-        host_json=read_json("./answer/add_host.json")
+        host_json = read_json("./answer/add_host.json")
         host_json["value"] = value
 
-        description_json=read_json("./answer/add_user.json")
-        description_json[-1]["element"]["initial_option"]=host_json
+        description_json = read_json("./answer/add_user.json")
+        description_json[-1]["element"]["initial_option"] = host_json
         description_json[-1]["element"]["options"].append(host_json)
     elif PATTERN == 2:
         # Pattern 2
@@ -179,7 +179,7 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
         # 入力した時間 に設定する
         else:
             target_blocks = update_time_input(body)
-        
+
         view_json["blocks"] = target_blocks
 
     elif PATTERN == 2:
@@ -189,9 +189,9 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
             button_select = action.split('-')[-1]
             date = target.removesuffix("-opt")
 
-            for index,item in enumerate(view_json["blocks"]):
+            for index, item in enumerate(view_json["blocks"]):
                 if item["block_id"] == target:
-                    
+
                     value = view_json["blocks"][index-1]
 
                     condition = True
@@ -206,7 +206,7 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
 
                     view_json["blocks"][index-1] = update_date_block(condition, value["block_id"], time, button_select)
                     item["elements"] = update_button_block(condition, date, button_select)
-                    
+
                     break
 
     ack()
@@ -224,7 +224,8 @@ def insert_time_block(body: dict) -> dict:
     target_date = body["actions"][0]["block_id"]
     temp = body["view"]["blocks"]
 
-    target_blocks = [item for item in temp if "block_id" in item and target_date in item["block_id"]]
+    target_blocks = [item for item in temp
+                     if "block_id" in item and target_date in item["block_id"]]
 
     option_num = len(target_blocks)
     option_time = str(target_blocks[0]["text"]["text"].split("の")[-1].strip(' *'))
@@ -246,19 +247,19 @@ def update_date_block(check: bool, date: str, time: str, value: str):
             update_value = "終日可能"
         else:
             update_value = "参加不可能"
-        
-        return generate_date_section_block(date,time,update_value)
-    
+
+        return generate_date_section_block(date, time, update_value)
+
     else:
 
-        return generate_date_input_block(date,time)
+        return generate_date_input_block(date, time)
 
 
 def update_button_block(check: bool, date: str, button_select: str):
     """Pattern2 回答用 Modal のボタンブロックを追加更新する．"""
 
     if check:
-        return generate_buttons_block(date,button_select)["elements"]
+        return generate_buttons_block(date, button_select)["elements"]
     else:
         return generate_buttons_block(date)["elements"]
 
@@ -295,8 +296,8 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
                 # TODO:終日用に設定する
                 sets = []
             else:
-                sets = [ temp["member_start-timepicker-action"]["selected_time"], 
-                        temp["member_end-timepicker-action"]["selected_time"] ]
+                sets = [temp["member_start-timepicker-action"]["selected_time"],
+                        temp["member_end-timepicker-action"]["selected_time"]]
 
             dates[date].append(sets)
 
@@ -455,7 +456,7 @@ def register(app):
     app.action("member_start-timepicker-action")(update_modal)
     app.action("member_end-timepicker-action")(update_modal)
     app.action("member_check-action")(update_modal)
-    
+
     app.action("click_option-yes")(update_modal)
     app.action("click_option-no")(update_modal)
 
