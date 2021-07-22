@@ -1,4 +1,4 @@
-""" スケジュール調整を主催する為の機能 """
+"""スケジュール調整を主催する為の機能"""
 
 from datetime import datetime, timedelta
 
@@ -6,6 +6,7 @@ from slack_bolt import Ack
 from slack_sdk import WebClient
 
 from blocks import read_json
+from blocks.builder import from_host
 from settings import set_logger
 
 
@@ -141,74 +142,41 @@ def get_modal_inputs(body: dict, values: dict) -> dict:
 
 
 def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
-    """日程調整用 Modal の提出を確認する．"""
+    """回答者宛にメッセージを送る．"""
 
     values = view["state"]["values"]
 
     # モーダルの入力値を取得
-    modal_inputs = get_modal_inputs(body, values)
+    inputs = get_modal_inputs(body, values)
 
     # チャンネル・個人用 の確認
     target = body["view"]["callback_id"]
     if target == 'set_schedules-im':
-        modal_inputs["send_lists"] = get_users(values)
+        inputs["send_lists"] = check_users(values)
     elif target == 'set_schedules-channel':
-        modal_inputs["send_lists"] = get_channels(values)
+        inputs["send_lists"] = check_channels(values)
 
     ack()
 
-    # メッセージを送信
-    send_message(modal_inputs, client)
-
-
-def get_modal_inputs(body: dict, values: dict):
-
-    start_date = values["start_date"]["datepicker-action"]["selected_date"]
-    end_date = values["end_date"]["datepicker-action"]["selected_date"]
-    start_time = values["start_time"]["timepicker-action"]["selected_time"]
-    end_time = values["end_time"]["timepicker-action"]["selected_time"]
-    modal_inputs = {
-        "host": "<@"+body["user"]["id"]+">",
-        "date": start_date + " から " + end_date,
-        "time": start_time + " から " + end_time,
-        "setting": values["display_result"]["result-option"]["selected_option"]["text"]["text"]
-    }
-
-    return modal_inputs
-
-
-def send_message(inputs: dict, client: WebClient):
-    """選択した回答者宛に メッセージ を送る．"""
-
-    # 回答者宛のメッセージブロック
-    message_json = read_json("./message/from_host.json")
-
-    for item in message_json:
-        if "block_id" in item:
-            if item["block_id"] not in inputs:
-                message_json.remove(item)
-            else:
-                item["text"]["text"] += inputs[item["block_id"]]
-
-    # 主催者用の　スケジュール調整の詳細ブロック
-    detail_json = read_json("./message/schedule_detail.json")
-    detail_json.extend(message_json[3:-1])
+    header, *sections, actions = from_host(inputs["host"], inputs["date"],
+                                           inputs["time"], inputs["setting"])
 
     # 主催者 に作成した調整を送信する
+    detail_json = read_json("./message/schedule_detail.json") + sections
     response = client.chat_postMessage(channel=inputs["host_id"],
-                                       text="メッセージを確認してください",
+                                       text="日程調整を作成しました",
                                        blocks=detail_json,
                                        as_user=True)
 
     # 主催者と主催メッセージの情報を追加する
-    message_json[-1]["elements"][0]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
-    message_json[-1]["elements"][1]["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
+    for button in actions["elements"]:
+        button["value"] = f"{response['channel']}-{inputs['host_id']}-{response['ts']}"
 
     # 選択したユーザ・チャンネル にメッセージを送信する
     for item in inputs["send_lists"]:
         client.chat_postMessage(channel=item,
-                                text="メッセージを確認してください",
-                                blocks=message_json,
+                                text="日程調整に回答してください",
+                                blocks=[header, *sections, actions],
                                 as_user=True)
 
 

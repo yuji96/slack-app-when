@@ -12,6 +12,7 @@ from slack_bolt import Ack
 from slack_sdk import WebClient
 
 from blocks import read_json
+from blocks.answer import AnswerModal
 from settings import set_logger, TMP_DIR
 
 # TODO: デバッグ用で開発後には削除する
@@ -27,13 +28,10 @@ def open_modal(ack: Ack, body: dict, client: WebClient):
     """回答用 Modal を表示する．"""
 
     view_json = read_json("./modals/answer_schedule.json")
-
-    # モーダルのブロック を追加
     view_json["blocks"], time = insert_block(body)
 
     ack()
 
-    # モーダルを開く
     client.views_open(
         trigger_id=body["trigger_id"],
         view=view_json)
@@ -77,7 +75,8 @@ def generate_block(date: str, time: str, num: int) -> list:
                    generate_time_block(date, time, num), generate_buttons_block(date, "None")]
     elif PATTERN == 2:
         # Pattern 2
-        pattern = [divider_block, generate_date_input_block(date, time),
+        modal = AnswerModal(date, time)  # FIXME
+        pattern = [divider_block, modal.date_input_block,
                    generate_buttons_block(date)]
 
     return pattern
@@ -92,17 +91,6 @@ def generate_date_block(date: str, time: str) -> dict:
     date_block["accessory"]["value"] += f"-{date}"
 
     return date_block
-
-
-def generate_date_input_block(date: str, time: str) -> dict:
-    """Pattern2 回答用 Modal の日にちのInputブロックを追加する．"""
-
-    label_json = read_json("./answer/add_date-input.json")
-
-    label_json["block_id"] = date
-    label_json["label"]["text"] = label_json["label"]["text"].replace("date", date).replace("time", time)
-
-    return label_json
 
 
 def generate_date_section_block(date: str, time: str, initial: str) -> dict:
@@ -241,18 +229,11 @@ def insert_time_block(body: dict) -> dict:
 def update_date_block(check: bool, date: str, time: str, value: str):
     """Pattern2 回答用 Modal の時間回答ブロックを追加更新する．"""
 
-    if check:
+    if not check:
+        return AnswerModal(date, time).date_input_block
 
-        if value == "yes":
-            update_value = "終日可能"
-        else:
-            update_value = "参加不可能"
-
-        return generate_date_section_block(date, time, update_value)
-
-    else:
-
-        return generate_date_input_block(date, time)
+    update_value = "終日可能" if value == "yes" else "参加不可能"
+    return generate_date_section_block(date, time, update_value)
 
 
 def update_button_block(check: bool, date: str, button_select: str):
@@ -267,8 +248,8 @@ def update_button_block(check: bool, date: str, button_select: str):
 def update_time_input(body: dict) -> dict:
     """Pattern1 回答用 Modal の時間選択ブロックを更新する．"""
 
-    # TODO:　入力した時間が有効か確認する
-    # TODO:　重複しているか確認
+    # TODO: 入力した時間が有効か確認する
+    # TODO: 重複しているか確認
 
     return body["view"]["blocks"]
 
