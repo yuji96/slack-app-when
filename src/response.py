@@ -13,9 +13,11 @@ class Data(dict):  # TODO: 名前の再考
     def members(self) -> Iterable:
         target = self.body["view"]["callback_id"]
         if target == 'set_schedules-im':
-            return self.values_["users_select"]["multi_users_select-action"]["selected_users"]
+            yield from self.values_["users_select"]["multi_users_select-action"]["selected_users"]
         else:
-            yield list(self.values_["channel_select"].values())[0]["selected_channel"]
+            for val in self.values_["channel_select"].values():
+                if channel := val.get("selected_channel"):
+                    yield channel
 
     def set_modal_inputs(self):
         values = self.values_

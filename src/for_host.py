@@ -37,7 +37,7 @@ def home_tab(client: WebClient, event: dict) -> dict:
                          view=read_json("./app_tab/home.json"))
 
 
-def open_modal(ack: Ack, body: dict, client: WebClient, view: dict) -> dict:
+def open_modal(ack: Ack, body: dict, client: WebClient) -> dict:
     """日程調整用 Modal を表示する．"""
 
     if "actions" in body:

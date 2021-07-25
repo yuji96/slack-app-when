@@ -19,7 +19,6 @@ from pprint import pprint
 
 
 logger = set_logger(__name__)
-
 PATTERN = 2
 
 
@@ -48,15 +47,15 @@ def insert_block(body: dict) -> list:
         if "block_id" in item and item["block_id"] in items:
             values[item["block_id"]] = item["text"]["text"].split("\n")[1]
 
-    # 開催日から終了日の間　の日付を生成する
+    # 開催日から終了日の間 の日付を生成する
     dates = values["date"].split(" から ")
     values["date"] = [str(item.date()) for item in pd.date_range(dates[0], dates[1])]
 
-    # 時間選択　のブロック
+    # 時間選択 のブロック
     for item in values["date"]:
         insert_blocks.extend(generate_block(item, values["time"], 1))
 
-    # 主催者宛　のブロック
+    # 主催者宛 のブロック
     users_json = generate_description_block(body["actions"][-1]["value"])
     insert_blocks.extend(users_json)
 
@@ -158,8 +157,7 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
     action = body["actions"][0]["action_id"]
 
     if PATTERN == 1:
-        # Pattern 1
-        # 時間設定のブロック　を追加する
+        # 時間設定のブロック を追加する
         if action == "member-add_date":
             target_blocks = insert_time_block(body)
 
@@ -170,7 +168,6 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
         view_json["blocks"] = target_blocks
 
     elif PATTERN == 2:
-        # Pattern 2
         if "click_option" in action:
 
             button_select = action.split('-')[-1]
@@ -198,7 +195,7 @@ def update_modal(ack: Ack, body: dict, client: WebClient):
 
     ack()
 
-    # モーダルを　更新する
+    # モーダルを 更新する
     client.views_update(
         view=view_json,
         hash=body["view"]["hash"],
@@ -376,7 +373,7 @@ def send_answer(inputs: dict, secret_value: str, client: WebClient):
 
 
 def send_not_answer(ack: Ack, body: dict, client: WebClient):
-    """参加できない　と主催者に送信する．"""
+    """参加できない と主催者に送信する．"""
 
     member = body["user"]["id"]
     secret_value = body["actions"][0]["value"]
