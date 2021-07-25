@@ -1,7 +1,4 @@
 """スケジュール調整を主催する為の機能"""
-
-from datetime import datetime, timedelta
-
 from slack_bolt import Ack
 from slack_sdk import WebClient
 
@@ -28,10 +25,6 @@ def register(app):
     # ショートカットからモーダルを発動
     app.shortcut("set_schedules-channel")(open_modal)
     app.shortcut("set_schedules-im")(open_modal)
-
-    # モーダル入力時
-    app.action("host_datepicker-action")(update_modal)
-    app.action("host_timepicker-action")(update_modal)
 
     # 作成完了と回答依頼を送信
     app.view("set_schedules-im")(post_message)
@@ -60,29 +53,10 @@ def open_modal(ack: Ack, body: dict, client: WebClient, view: dict) -> dict:
     client.views_open(trigger_id=body["trigger_id"], view=modal)
 
 
-def update_modal(ack: Ack, body: dict, client: WebClient):
-    """日程調整用 Modal の内容を更新する．"""
-
-    view_json = read_json("./modals/set_schedules.json")
-
-    # 更新する内容
-    view_json["blocks"] = body["view"]["blocks"]
-    view_json["callback_id"] = body["view"]["callback_id"]
-
-    # TODO: 入力した時間と日程が有効かどうか確認する
-
-    ack()
-
-    # モーダルを更新する
-    client.views_update(
-        view=view_json,
-        hash=body["view"]["hash"],
-        view_id=body["view"]["id"])
-
-
 def post_message(ack: Ack, body: dict, client: WebClient, view: dict):
     """ホストとメンバーにメッセージを送信する．"""
     data = Data(body, view)
+    # TODO: 日時の検証はここで`ack(response_action="errors", errors={...}})` で行う．
     ack()
     header, *sections, actions = message_from_host(**data)
 
