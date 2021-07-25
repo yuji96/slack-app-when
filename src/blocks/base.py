@@ -1,10 +1,20 @@
+class Modal(dict):
+    def __init__(self, callback_id, title, submit, *args, **kwargs):
+        super().__init__(type="modal", callback_id=callback_id,
+                         title=dict(type="plain_text", text=title),
+                         submit=dict(type="plain_text", text=submit),
+                         *args, **kwargs)
+
+
 class Block(dict):
     TYPE = None
 
-    def __init__(self, block_id=None, *args, **kwargs):
+    def __init__(self, block_id=None, accessory=None, *args, **kwargs):
         super().__init__(type=self.TYPE, *args, **kwargs)
         if block_id:
             self["block_id"] = block_id
+        if accessory:
+            self["accessory"] = accessory
 
 
 class Action(Block):
@@ -44,6 +54,22 @@ class Button(Text):
         super().__init__(t_type="plain_text", text=text,
                          style=style, value=value, action_id=action_id,
                          *args, **kwargs)
+
+
+class Picker(Block):
+    def __init__(self, action_id, initial, *args, **kwargs):
+        super().__init__(action_id=action_id, *args, **kwargs)
+        self[self.initial_field] = str(initial)
+
+
+class DatePicker(Picker):
+    TYPE = "datepicker"
+    initial_field = "initial_date"
+
+
+class TimePicker(Picker):
+    TYPE = "timepicker"
+    initial_field = "initial_time"
 
 
 if __name__ == "__main__":
