@@ -1,3 +1,6 @@
+import json
+
+
 class Modal(dict):
     def __init__(self, callback_id, title, submit, *args, **kwargs):
         super().__init__(type="modal", callback_id=callback_id,
@@ -16,6 +19,18 @@ class Block(dict):
         if accessory:
             self["accessory"] = accessory
 
+    def __str__(self) -> str:
+        return json.dumps(self, indent=4)
+
+
+class Input(Block):
+    TYPE = "input"
+
+    def __init__(self, block_id, label, element, optional=False, *args, **kwargs):
+        super().__init__(block_id=block_id, element=element, optional=optional,
+                         label=dict(type="plain_text", text=label),
+                         *args, **kwargs)
+
 
 class Action(Block):
     TYPE = "actions"
@@ -24,7 +39,7 @@ class Action(Block):
         super().__init__(elements=list(elements))
 
 
-class Text(Block):
+class Text(Block):  # TODO: いらない説
     TYPE = None
 
     def __init__(self, t_type, text, *args, **kwargs):
@@ -72,8 +87,18 @@ class TimePicker(Picker):
     initial_field = "initial_time"
 
 
+class PlainTextInput(Block):
+    TYPE = "plain_text_input"
+
+    def __init__(self, action_id, initial=None, placeholder=None, *args, **kwargs):
+        super().__init__(action_id=action_id, *args, **kwargs)
+        if initial:
+            self["initial_value"] = initial
+        if placeholder:
+            self["placeholder"] = dict(type="plain_text", text=placeholder)
+
+
 if __name__ == "__main__":
-    # print(Section(mrkdwn="以下の内容で時間調整を行います。", block_id="hoge"))
-    # print(Button("id", "val", "text", "style"))
-    print(Action(Button(action_id="answer_schedule", value="answer_schedule",
-                        text="回答する", style="primary")))
+    tmp = Input(block_id="block_id", label="label",
+                element=PlainTextInput(action_id="action_id", initial="inital", placeholder="text"))
+    print(tmp)

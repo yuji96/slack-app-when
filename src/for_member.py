@@ -3,7 +3,7 @@ from slack_bolt import Ack
 from slack_sdk import WebClient
 
 from blocks import read_json
-from blocks.answer import AnswerModal
+from blocks.builder import modal_for_member
 from settings import set_logger
 
 # TODO: デバッグ用で開発後には削除する
@@ -11,7 +11,6 @@ from pprint import pprint
 
 
 logger = set_logger(__name__)
-PATTERN = 2
 
 
 def register(app):
@@ -21,279 +20,26 @@ def register(app):
     app.action("answer_schedule")(open_modal)
     app.action("not_answer")(send_not_answer)
 
-    # 「追加」ボタンのクリック時
-    app.action("member-add_date")(update_modal)
-
-    # 時間の選択時
-    app.action("member_start-timepicker-action")(update_modal)
-    app.action("member_end-timepicker-action")(update_modal)
-    app.action("member_check-action")(update_modal)
-
-    app.action("click_option-yes")(update_modal)
-    app.action("click_option-no")(update_modal)
-
     # 提出時
     app.view("answer_schedule")(check_modal)
 
 
 def open_modal(ack: Ack, body: dict, client: WebClient):
     """回答用 Modal を表示する．"""
-
-    view_json = read_json("./modals/answer_schedule.json")
-    view_json["blocks"], time = insert_block(body)
-
     ack()
-
-    client.views_open(
-        trigger_id=body["trigger_id"],
-        view=view_json)
-
-
-def insert_block(body: dict) -> list:
-    """回答用 Modal のブロックを編集する．"""
-
-    insert_blocks = []
-    values = {}
 
     # [主催者、日、時間、設定] をメッセージから取得する
+    values = {}
     items = ['host', 'date', 'time', 'setting']
     for item in body["message"]["blocks"]:
-        if "block_id" in item and item["block_id"] in items:
-            values[item["block_id"]] = item["text"]["text"].split("\n")[1]
+        if (block_id := item.get("block_id")) in items:
+            values[block_id] = item["text"]["text"].split("\n")[1]
 
-    # 開催日から終了日の間 の日付を生成する
-    dates = values["date"].split(" から ")
-    values["date"] = [str(item.date()) for item in pd.date_range(dates[0], dates[1])]
+    start, end = values["date"].split(" から ")
+    values["date"] = pd.date_range(start, end).date.astype(str)
 
-    # 時間選択 のブロック
-    for item in values["date"]:
-        insert_blocks.extend(generate_block(item, values["time"], 1))
-
-    # 主催者宛 のブロック
-    users_json = generate_description_block(body["actions"][-1]["value"])
-    insert_blocks.extend(users_json)
-
-    return insert_blocks, values["time"]
-
-
-def generate_block(date: str, time: str, num: int) -> list:
-    """回答用 Modal のブロックを追加する．"""
-
-    divider_block = {"type": "divider"}
-
-    if PATTERN == 1:
-        # Pattern 1
-        pattern = [divider_block, generate_date_block(date, time),
-                   generate_time_block(date, time, num), generate_buttons_block(date, "None")]
-    elif PATTERN == 2:
-        # Pattern 2
-        modal = AnswerModal(date, time)  # FIXME
-        pattern = [divider_block, modal.date_input_block,
-                   generate_buttons_block(date)]
-
-    return pattern
-
-
-def generate_date_block(date: str, time: str) -> dict:
-    """Pattern1 回答用 Modal の日にちのブロックを追加する．"""
-
-    date_block = read_json("./answer/add_date.json")
-    date_block["block_id"] = date
-    date_block["text"]["text"] = date_block["text"]["text"].replace("date", date).replace("time", time)
-    date_block["accessory"]["value"] += f"-{date}"
-
-    return date_block
-
-
-def generate_date_section_block(date: str, time: str, initial: str) -> dict:
-    """Pattern2 回答用 Modal の日にちのSectionブロックを追加する．"""
-
-    label_json = read_json("./answer/add_date-section.json")
-
-    label_json["block_id"] = date
-    label_json["text"]["text"] = label_json["text"]["text"].replace("date", date).replace("time", time).replace("opt", initial)
-
-    return label_json
-
-
-def generate_time_block(date: str, time: str, num: int) -> dict:
-    """Pattern1 回答用 Modal の時間選択のブロックを追加する．"""
-
-    start_time, end_time = time.split(" から ")
-
-    time_block = read_json("./answer/add_time.json")
-    time_block["block_id"] = time_block["block_id"].replace("date", date).replace("opt", str(num))
-    time_block["elements"][0]["initial_time"] = start_time
-    time_block["elements"][1]["initial_time"] = end_time
-
-    return time_block
-
-
-def generate_buttons_block(date: str, value="default") -> dict:
-    """Pattern2 回答用 Modal の時間選択のブロックを追加する．"""
-
-    option_json = read_json("./answer/add_button_options.json")
-    option_json["block_id"] = f"{date}-opt"
-    if value == "yes":
-        option_json["elements"][0]["style"] = "primary"
-    elif value == "no":
-        option_json["elements"][-1]["style"] = "danger"
-
-    return option_json
-
-
-def generate_description_block(value: str) -> dict:
-    """回答用 Modal の作者のブロックを追加する．"""
-
-    if PATTERN == 1:
-        # Pattern 1
-        host_json = read_json("./answer/add_host.json")
-        host_json["value"] = value
-
-        description_json = read_json("./answer/add_user.json")
-        description_json[-1]["element"]["initial_option"] = host_json
-        description_json[-1]["element"]["options"].append(host_json)
-    elif PATTERN == 2:
-        # Pattern 2
-        description_json = [read_json("./answer/add_description.json")]
-        description_json[0]["elements"][0]["text"] += f"<@{value.split('-')[1]}>"
-        description_json[0]["elements"][1]["alt_text"] = value
-
-    return description_json
-
-
-def update_modal(ack: Ack, body: dict, client: WebClient):
-    """回答用 Modal のブロックを更新する．"""
-
-    view_json = read_json("./modals/answer_schedule.json")
-    view_json["blocks"] = body["view"]["blocks"]
-    target = body["actions"][0]["block_id"]
-    action = body["actions"][0]["action_id"]
-
-    if PATTERN == 1:
-        # 時間設定のブロック を追加する
-        if action == "member-add_date":
-            target_blocks = insert_time_block(body)
-
-        # 入力した時間 に設定する
-        else:
-            target_blocks = body["view"]["blocks"]
-
-        view_json["blocks"] = target_blocks
-
-    elif PATTERN == 2:
-        if "click_option" in action:
-
-            button_select = action.split('-')[-1]
-            date = target.removesuffix("-opt")
-
-            for index, item in enumerate(view_json["blocks"]):
-                if item["block_id"] == target:
-
-                    value = view_json["blocks"][index-1]
-
-                    condition = True
-                    if value["type"] == "section":
-                        text = value["text"]["text"].split('*')
-                        current_input, time = text[-2], text[3]
-                        condition = (
-                            (current_input == "終日可能" and button_select == "no") or
-                            (current_input == "参加不可能" and button_select == "yes"))
-                    else:
-                        time = value["label"]["text"].split(" の ")[-1]
-
-                    view_json["blocks"][index-1] = update_date_block(condition, value["block_id"], time, button_select)
-                    item["elements"] = update_button_block(condition, date, button_select)
-
-                    break
-
-    ack()
-
-    # モーダルを 更新する
-    client.views_update(
-        view=view_json,
-        hash=body["view"]["hash"],
-        view_id=body["view"]["id"])
-
-
-def insert_time_block(body: dict) -> dict:
-    """Pattern1 回答用 Modal の時間選択ブロックを追加更新する．"""
-
-    target_date = body["actions"][0]["block_id"]
-    temp = body["view"]["blocks"]
-
-    target_blocks = [item for item in temp
-                     if "block_id" in item and target_date in item["block_id"]]
-
-    option_num = len(target_blocks)
-    option_time = str(target_blocks[0]["text"]["text"].split("の")[-1].strip(' *'))
-
-    for i in range(len(temp)):
-        if target_date in temp[i]["block_id"]:
-            temp.insert(i+2, generate_time_block(target_date, option_time, option_num))
-            break
-
-    return temp
-
-
-def update_date_block(check: bool, date: str, time: str, value: str):
-    """Pattern2 回答用 Modal の時間回答ブロックを追加更新する．"""
-
-    if not check:
-        return AnswerModal(date, time).date_input_block
-
-    update_value = "終日可能" if value == "yes" else "参加不可能"
-    return generate_date_section_block(date, time, update_value)
-
-
-def update_button_block(check: bool, date: str, button_select: str):
-    """Pattern2 回答用 Modal のボタンブロックを追加更新する．"""
-
-    if check:
-        return generate_buttons_block(date, button_select)["elements"]
-    else:
-        return generate_buttons_block(date)["elements"]
-
-
-def get_modal_inputs(body: dict, values: dict) -> dict:
-    """回答用 Modal の 入力を取得する．"""
-
-    member = body["user"]["id"]
-    target = body["view"]["blocks"][-1]["elements"][0]["text"].split(':')[-1]
-    secret = body["view"]["blocks"][-1]["elements"][1]["alt_text"]
-    dates, date = {}, "date"
-
-    # 入力した日時を取得する
-    if PATTERN == 1:
-        # Pattern 1
-        date_list = sorted(list(values.keys()))
-        for item in date_list:
-
-            temp = values[item]
-            if date not in item:
-                date = item[:-2]
-                dates[date] = []
-
-            if temp["member_check-action"]["selected_options"] is None:
-                # TODO:終日用に設定する
-                sets = []
-            else:
-                sets = [temp["member_start-timepicker-action"]["selected_time"],
-                        temp["member_end-timepicker-action"]["selected_time"]]
-
-            dates[date].append(sets)
-
-    elif PATTERN == 2:
-        # Pattern 2
-        for item in values:
-            dates[item] = values[item]["plain_text_input-action"]["value"]
-
-    return {
-        "target": target,
-        "secret_value": secret,
-        "available_date": dates,
-        "member": member
-    }
+    client.views_open(trigger_id=body["trigger_id"],
+                      view=modal_for_member(callback_id="answer_schedule", values=values))
 
 
 def get_message(value: str, client: WebClient):
@@ -308,7 +54,7 @@ def get_message(value: str, client: WebClient):
         inclusive=True,
         limit=1)["messages"]
 
-    if message_list == []:
+    if message_list:
         return None
 
     message_info = message_list[0]
