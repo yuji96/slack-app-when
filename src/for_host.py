@@ -63,7 +63,7 @@ def ask_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
     # 主催者 に作成した調整を送信する
     response = client.chat_postMessage(channel=data["host_id"],
                                        text="日程調整を作成しました",
-                                       blocks=[Header(text="時間調整の詳細"), *sections],
+                                       blocks=[Header("時間調整の詳細"), *sections],
                                        as_user=True)
 
     # 主催者と主催メッセージの情報を追加する

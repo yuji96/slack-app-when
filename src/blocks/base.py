@@ -57,27 +57,25 @@ class Action(Block):
         super().__init__(elements=list(elements))
 
 
-class Section(Text):
+class Section(Block):
     TYPE = "section"
 
-    def __init__(self, mrkdwn=None, *args, **kwargs):
-        if mrkdwn:
-            super().__init__(t_type="mrkdwn", text=mrkdwn, *args, **kwargs)
+    def __init__(self, text, *args, **kwargs):
+        super().__init__(text=MarkDown(text), *args, **kwargs)
 
 
-class Header(Text):
+class Header(Block):
     TYPE = "header"
 
     def __init__(self, text, *args, **kwargs):
-        super().__init__(t_type="plain_text", text=text,
-                         *args, **kwargs)
+        super().__init__(text=PlainText(text), *args, **kwargs)
 
 
-class Button(Text):
+class Button(Block):
     TYPE = "button"
 
     def __init__(self, action_id, value, text, style, *args, **kwargs):
-        super().__init__(t_type="plain_text", text=text,
+        super().__init__(text=PlainText(text),
                          style=style, value=value, action_id=action_id,
                          *args, **kwargs)
 

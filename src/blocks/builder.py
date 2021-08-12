@@ -7,16 +7,16 @@ from blocks import read_json
 def message_from_host(host_id, start_date, end_date, start_time, end_time,
                       setting=None, *args, **kwargs):
     header = Header("時間調整のご協力")
-    sections = [Section(mrkdwn="以下の内容で時間調整を行います。"),
-                Section(mrkdwn=f"*主催者:*\n<@{host_id}>", block_id="host"),
-                Section(mrkdwn=f"*開催日:*\n{start_date} から {end_date}", block_id="date"),
-                Section(mrkdwn=f"*開催時間:*\n{start_time} から {end_time}", block_id="time")]
+    sections = [Section("以下の内容で時間調整を行います。"),
+                Section(f"*主催者:*\n<@{host_id}>", block_id="host"),
+                Section(f"*開催日:*\n{start_date} から {end_date}", block_id="date"),
+                Section(f"*開催時間:*\n{start_time} から {end_time}", block_id="time")]
     action = Action(Button(action_id="answer_schedule", value="answer_schedule",
                            text="回答する", style="primary"),
                     Button(action_id="not_answer", value="answer_schedule",
                            text="不参加", style="danger"))
     if setting:
-        sections.append(Section(mrkdwn=f"*回答設定:*\n{setting}", block_id="setting"))
+        sections.append(Section(f"*回答設定:*\n{setting}", block_id="setting"))
     return [header, *sections, action]
 
 
@@ -27,14 +27,14 @@ def modal_for_host(callback_id: str):
 
     modal = Modal(callback_id=callback_id, title="時間調整", submit="送信する", blocks=[
         Header("開催したい日程"),
-        Section(mrkdwn="この日から", block_id="start_date",
+        Section("この日から", block_id="start_date",
                 accessory=DatePicker(action_id="host_datepicker-action", initial=today.date())),
-        Section(mrkdwn="この日までの間に開催したい", block_id="end_date",
+        Section("この日までの間に開催したい", block_id="end_date",
                 accessory=DatePicker(action_id="host_datepicker-action", initial=tomorrow.date())),
         Header("開催可能な時間帯"),
-        Section(mrkdwn="この時刻から", block_id="start_time",
+        Section("この時刻から", block_id="start_time",
                 accessory=TimePicker(action_id="host_timepicker-action", initial="06:00")),
-        Section(mrkdwn="この時刻まで", block_id="end_time",
+        Section("この時刻まで", block_id="end_time",
                 accessory=TimePicker(action_id="host_timepicker-action", initial="23:00"))
     ])
     modal["blocks"].extend(read_json(f"set/set_{target}.json"))  # TODO: remove json
