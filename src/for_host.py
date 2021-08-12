@@ -15,20 +15,20 @@ logger = set_logger(__name__)
 def register(app):
     logger.info("register")
 
-    # ホームタブを表示
-    app.event("app_home_opened")(home_tab)
+    # # ホームタブを表示
+    # app.event("app_home_opened")(home_tab)
 
-    # ホームタブからモーダルを発動
-    app.action("set_schedules-channel")(open_modal)
-    app.action("set_schedules-im")(open_modal)
+    # # ホームタブからモーダルを発動
+    # app.action("set_schedules-channel")(open_schedule_setting_modal)
+    # app.action("set_schedules-im")(open_schedule_setting_modal)
 
     # ショートカットからモーダルを発動
-    app.shortcut("set_schedules-channel")(open_modal)
-    app.shortcut("set_schedules-im")(open_modal)
+    app.shortcut("set_schedules-channel")(open_schedule_setting_modal)
+    app.shortcut("set_schedules-im")(open_schedule_setting_modal)
 
     # 作成完了と回答依頼を送信
-    app.view("set_schedules-im")(post_message)
-    app.view("set_schedules-channel")(post_message)
+    app.view("set_schedules-im")(ask_schedule)
+    app.view("set_schedules-channel")(ask_schedule)
 
 
 def home_tab(client: WebClient, event: dict) -> dict:
@@ -37,7 +37,7 @@ def home_tab(client: WebClient, event: dict) -> dict:
                          view=read_json("./app_tab/home.json"))
 
 
-def open_modal(ack: Ack, body: dict, client: WebClient) -> dict:
+def open_schedule_setting_modal(ack: Ack, body: dict, client: WebClient) -> dict:
     """日程調整用 Modal を表示する．"""
 
     if "actions" in body:
@@ -53,7 +53,7 @@ def open_modal(ack: Ack, body: dict, client: WebClient) -> dict:
     client.views_open(trigger_id=body["trigger_id"], view=modal)
 
 
-def post_message(ack: Ack, body: dict, client: WebClient, view: dict):
+def ask_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
     """ホストとメンバーにメッセージを送信する．"""
     data = Data(body, view)
     # TODO: 日時の検証はここで`ack(response_action="errors", errors={...}})` で行う．

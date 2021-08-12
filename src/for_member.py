@@ -17,14 +17,14 @@ def register(app):
     logger.info("register")
 
     # メッセージのクリック時
-    app.action("answer_schedule")(open_modal)
-    app.action("not_answer")(send_not_answer)
+    app.action("answer_schedule")(open_answer_modal)
+    app.action("not_answer")(send_no_answer)
 
     # 提出時
-    app.view("answer_schedule")(check_modal)
+    app.view("answer_schedule")(recieve_answer)
 
 
-def open_modal(ack: Ack, body: dict, client: WebClient):
+def open_answer_modal(ack: Ack, body: dict, client: WebClient):
     """回答用 Modal を表示する．"""
     ack()
 
@@ -84,7 +84,7 @@ def get_message(value: str, client: WebClient):
     return result
 
 
-def check_modal(ack: Ack, body: dict, client: WebClient, view: dict):
+def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
     """回答用 Modal の提出を確認する．"""
 
     values = view["state"]["values"]
@@ -123,7 +123,7 @@ def send_answer(inputs: dict, secret_value: str, client: WebClient):
     pprint({"result": inputs['available_date']})
 
 
-def send_not_answer(ack: Ack, body: dict, client: WebClient):
+def send_no_answer(ack: Ack, body: dict, client: WebClient):
     """参加できない と主催者に送信する．"""
 
     member = body["user"]["id"]
