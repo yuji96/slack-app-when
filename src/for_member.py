@@ -54,7 +54,7 @@ def get_message(value: str, client: WebClient):
         inclusive=True,
         limit=1)["messages"]
 
-    if message_list:
+    if not message_list:
         return None
 
     message_info = message_list[0]
