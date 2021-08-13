@@ -64,6 +64,10 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
                       for item in values}
     pprint({"result": available_date})
 
+    # TODO: Table class のインスタンスを生成
+    # host_message_ts を更新した画像を投稿
+    # URLを埋め込む
+
 
 def send_no_answer(ack: Ack, body: dict, client: WebClient):
     """参加できない と主催者に送信する．"""

@@ -1,36 +1,37 @@
 from collections import namedtuple
 import dataclasses
 import datetime as dt
+import pickle
 import re
-from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import requests
 import seaborn as sns
+from slack_sdk.web.client import WebClient
 
+from settings import TMP_DIR
 
 StartEnd = namedtuple('StartEnd', ['start', 'end'])
 
 
 @dataclasses.dataclass
 class Table:
-    data: dataclasses.InitVar[dict]
-    name: str
-    date_pair: Union[tuple[dt.date, dt.date], StartEnd]
-    time_pair: Union[tuple[dt.time, dt.time], StartEnd]
-    df: dataclasses.InitVar[Optional[pd.DataFrame]] = None
-
-    slots: list = dataclasses.field(init=False, default_factory=list)
-
-    def __post_init__(self, data, df):
-        self.date_pair = StartEnd(*self.date_pair)
-        start, end = self.time_pair
+    def __init__(self, answer, name, date_pair, time_pair,
+                 df=None, file_url=None, client=None):
+        self.name = name
+        self.date_pair = StartEnd(*date_pair)
+        start, end = time_pair
         self.time_pair = StartEnd(start.replace(minute=0), end)
-        for date, text in data.items():
+
+        self.slots = []  # TODO: yield from?
+        for date, text in answer.items():
             self.slots.extend(self.input_to_datetime(date, text))
 
-        if isinstance(df, pd.DataFrame):
+        if df:
             self.df = self.update_df(df)
+        elif file_url and client:
+            self.df = self.download(file_url, client)
         else:
             self.df = self.create_df()
 
@@ -115,12 +116,26 @@ class Table:
         table = df.unstack(level="time").stack(level="name").loc[:, start:end]
         return table.astype(int) + table.groupby(level="date").all()
 
+    def download(self, file_url, client):
+        res = requests.get(file_url, headers=dict(Authorization=f"Bearer {client.token}"))
+        df = pickle.loads(res.content)
+        return df
+
+    def upload(self, channels, client: WebClient):
+        # TODO: 中間ファイルがないのが理想
+        self.df.to_pickle(f"{TMP_DIR}/table.png")
+        res = client.files_upload(channels=channels, file=f"{TMP_DIR}/table.png")
+        return res["url_private_download"]
+
 
 if __name__ == "__main__":
     host_setting = dict(date_pair=(dt.date(2021, 7, 8), dt.date(2021, 7, 12)),
                         time_pair=(dt.time(6, 00), dt.time(22, 00)))
-    table1 = Table(data={dt.date(2021, 7, 10): '7 : 00 -11 : 00, 14:30  ~ 21:00'},
+    table1 = Table(answer={dt.date(2021, 7, 10): '7 : 00 -11 : 00, 14:30  ~ 21:00'},
                    name="one", **host_setting)
-    table2 = Table(data={dt.date(2021, 7, 10): '6 : 00 -6 : 45, 14:30  ~ 18:00'},
-                   name="two", **host_setting, df=table1.df)
-    tmp = table2.convert_to_table()
+    table1.to_pickle()
+
+    df = pd.read_pickle(f"{TMP_DIR}/pickle.pkl")
+    table2 = Table(answer={dt.date(2021, 7, 10): '6 : 00 -6 : 45, 14:30  ~ 18:00'},
+                   name="two", **host_setting, df=df)
+    table2.visualize()
