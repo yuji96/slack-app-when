@@ -68,7 +68,7 @@ def ask_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
 
     # 主催者と主催メッセージの情報を追加する
     for button in actions["elements"]:
-        button["value"] = f"{response['channel']}-{data['host_id']}-{response['ts']}"
+        button["value"] = f"{response['channel']}-{response['ts']}"
 
     # 選択したユーザ・チャンネル にメッセージを送信する
     for item in data.members:

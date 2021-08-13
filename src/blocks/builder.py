@@ -47,7 +47,8 @@ def modal_for_host(callback_id: str):
 
 
 def modal_for_member(callback_id, values):
-    return Modal(callback_id=callback_id, title="時間調整の回答", submit="送信する", blocks=[
+    return Modal(callback_id=callback_id, title="When!", submit="送信する", blocks=[
+        Header("日程調整の回答", block_id=values["host_info"])] + [
         Input(block_id=date, label=f"{date} の {values['time']}", optional=True,
               element=PlainTextInput(action_id="plain_text_input-action",
                                      initial="all",
