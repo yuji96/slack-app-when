@@ -1,5 +1,3 @@
-# TODO: 全体的に継承元を考え直す必要がある
-
 import json
 
 
@@ -39,15 +37,6 @@ class Block(Json):
             self["block_id"] = block_id
         if accessory:
             self["accessory"] = accessory
-
-
-class Input(Block):
-    TYPE = "input"
-
-    def __init__(self, block_id, label, element, optional=False, *args, **kwargs):
-        super().__init__(block_id=block_id, element=element, optional=optional,
-                         label=dict(type="plain_text", text=label),
-                         *args, **kwargs)
 
 
 class Action(Block):
@@ -96,21 +85,47 @@ class TimePicker(Picker):
     initial_field = "initial_time"
 
 
-class PlainTextInput(Block):
-    TYPE = "plain_text_input"
+class Input(Block):
+    TYPE = "input"
+    ELEMENT_TYPE = None
 
-    def __init__(self, action_id, initial=None, placeholder=None, *args, **kwargs):
-        super().__init__(action_id=action_id, *args, **kwargs)
+    def __init__(self, action_id=None, label=" ", optional=False, *args, **kwargs):
+        super().__init__(optional=optional,
+                         element=dict(type=self.ELEMENT_TYPE, action_id=action_id),
+                         label=PlainText(label), *args, **kwargs)
+
+
+class PlainTextInput(Input):
+    ELEMENT_TYPE = "plain_text_input"
+
+    def __init__(self, initial=None, placeholder=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if initial:
-            self["initial_value"] = initial
+            self["element"]["initial_value"] = initial
         if placeholder:
-            self["placeholder"] = dict(type="plain_text", text=placeholder)
+            self["element"]["placeholder"] = PlainText(placeholder)
+
+
+class ChannelsSelect(Input):
+    ELEMENT_TYPE = "channels_select"
+
+
+class UsersSelect(Input):
+    ELEMENT_TYPE = "multi_users_select"
+
+
+class RadioButtons(Input):
+    ELEMENT_TYPE = "radio_buttons"
+
+    def __init__(self, options, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self["element"]["options"] = [dict(text=PlainText(text), value=value)
+                                      for text, value in options]
 
 
 if __name__ == "__main__":
-    # tmp = Input(block_id="block_id", label="label",
-    #             element=PlainTextInput(action_id="action_id",
-    #                                    initial="inital",
-    #                                    placeholder="text"))
-    tmp = Modal("id", "title", "submit", blocks=[])
+    tmp = RadioButtons(block_id="display_result", action_id="result-option",
+                       options=[("主催者だけに回答を送る", "host"),
+                                ("回答者に全員の回答を公開する", "all")])
+
     print(tmp)

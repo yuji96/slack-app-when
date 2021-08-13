@@ -15,6 +15,7 @@ class Data(dict):  # TODO: 名前の再考
         if target == 'set_schedules-im':
             yield from self.values_["users_select"]["multi_users_select-action"]["selected_users"]
         else:
+            # TODO: こっちの実装が複雑になった理由って action_id 指定しなかったからではないか
             for val in self.values_["channel_select"].values():
                 if channel := val.get("selected_channel"):
                     yield channel
