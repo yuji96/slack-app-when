@@ -19,7 +19,7 @@ for_member.register(app)
 
 # TODO: スレッドごと消したい
 @app.event("reaction_added")
-def ask_for_introduction(event, say):
+def ask_for_introduction(event, *args, **kwargs):
     if event["reaction"] == "put_litter_in_its_place" and event["item_user"] == SLACK_BOT_ID:
         app.client.chat_delete(channel=event["item"]["channel"],
                                ts=event["item"]["ts"])

@@ -20,12 +20,14 @@ class Table:
     def __init__(self, answer, name, date_pair, time_pair,
                  df=None, file_url=None, client=None):
         self.name = name
-        self.date_pair = StartEnd(*date_pair)
-        start, end = time_pair
+        self.date_pair = StartEnd(*[dt.datetime.strptime(d, "%Y-%m-%d").date() for d in date_pair])
+        start, end = [dt.datetime.strptime(t, "%H:%M").time() for t in time_pair]
         self.time_pair = StartEnd(start.replace(minute=0), end)
 
         self.slots = []  # TODO: yield from?
         for date, text in answer.items():
+            # TODO: datetimeへの型変換のリファクタが必要
+            date = dt.datetime.strptime(date, "%Y-%m-%d").date()
             self.slots.extend(self.input_to_datetime(date, text))
 
         if df:
@@ -93,6 +95,7 @@ class Table:
         dates = table.index.get_level_values("date").unique()
         _, axes = plt.subplots(nrows=dates.size, sharex=True)
         for i, (ax, date) in enumerate(zip(axes, dates)):
+            # TODO: 最小値 == white ではなく、0 == white にする。
             g = sns.heatmap(table.loc[(date, slice(None))],
                             ax=ax, square=True,
                             cbar=False, cmap=["white", "lightblue", "lightgreen"],
@@ -100,8 +103,9 @@ class Table:
             g.set_title(date)
             g.set(xlabel=None, ylabel=None)
             g.tick_params(bottom=False, left=False, right=False, top=False)
-        g.set_xticklabels(table.columns.map(lambda t: str(t.hour) if t.minute == 0 else ""),
-                          rotation=0)
+        # TODO: ばぐってる
+        # g.set_xticklabels(table.columns.map(lambda t: str(t.hour) if t.minute == 0 else ""),
+        #                   rotation=0)
         plt.tight_layout()
         plt.show()
         # plt.savefig(f"{TMP_DIR}/table.png")

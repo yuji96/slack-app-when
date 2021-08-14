@@ -58,11 +58,12 @@ def modal_for_host(callback_id: str):
     return modal
 
 
-def modal_for_member(callback_id, values):
+def modal_for_member(callback_id, date_range, start_time, end_time, host_info):
     return Modal(callback_id=callback_id, title="When!", submit="送信する", blocks=[
-        Header("日程調整の回答", block_id=values["host_info"])] + [
-        PlainTextInput(block_id=date, label=f"{date} の {values['time']}", optional=True,
-                       action_id="plain_text_input-action", initial="all",  # TODO: 全時間帯
+        Header("日程調整の回答", block_id=host_info)] + [
+        PlainTextInput(block_id=date, label=f"{date} の {start_time} から {end_time}",
+                       action_id="plain_text_input-action",  optional=True,
+                       initial=f"{start_time}-{end_time}",
                        placeholder="例：1400-1500, 1730~1800 （空欄は終日不可能）")
-        for date in values["date"]
+        for date in date_range
     ])

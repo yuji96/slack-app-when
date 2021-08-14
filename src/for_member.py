@@ -1,3 +1,5 @@
+import re
+
 import pandas as pd
 from slack_bolt import Ack
 from slack_sdk import WebClient
@@ -7,6 +9,8 @@ from settings import set_logger
 
 # TODO: デバッグ用で開発後には削除する
 from pprint import pprint
+
+from visualize import Table
 
 
 logger = set_logger(__name__)
@@ -27,20 +31,13 @@ def open_answer_modal(ack: Ack, body: dict, client: WebClient):
     """回答用 Modal を表示する．"""
     ack()
 
-    # [主催者、日、時間、設定] をメッセージから取得する
-    values = {}
-    items = ['host', 'date', 'time', 'setting']
-    for item in body["message"]["blocks"]:
-        if (block_id := item.get("block_id")) in items:
-            values[block_id] = item["text"]["text"].split("\n")[1]
-
-    start, end = values["date"].split(" から ")
-    values["date"] = pd.date_range(start, end).date.astype(str)
-
-    values["host_info"] = body["actions"][0]["value"]
+    date_range = pd.date_range(*re.findall(r"\d{4}-\d{2}-\d{2}", str(body))).date.astype(str)
+    start_time, end_time = re.findall(r"\d{2}:\d{2}", str(body))
+    host_info = body["actions"][0]["value"]
 
     client.views_open(trigger_id=body["trigger_id"],
-                      view=modal_for_member(callback_id="answer_schedule", values=values))
+                      view=modal_for_member("answer_schedule",
+                                            date_range, start_time, end_time, host_info))
 
 
 def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
@@ -57,14 +54,16 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
                             thread_ts=host_message_ts,
                             as_user=True)
 
-    # モーダルの入力を表示する
-    print("\n\nモーダルの入力")
-    values = view["state"]["values"]
-    available_date = {item: values[item]["plain_text_input-action"]["value"]
-                      for item in values}
-    pprint({"result": available_date})
+    answer = {k: v["plain_text_input-action"]["value"] for k, v in view["state"]["values"].items()}
+    header, input_, *_ = view["blocks"]
+    start_date, *_, end_date = answer
+    # TODO: username と name の違いとは？ display name はとれない？
+    table = Table(answer=answer, name=body["user"]["name"],
+                  date_pair=(start_date, end_date),
+                  time_pair=input_["element"]["initial_value"].split("-"))
+    print(table)
 
-    # TODO: Table class のインスタンスを生成
+    # TODO:
     # host_message_ts を更新した画像を投稿
     # URLを埋め込む
 
