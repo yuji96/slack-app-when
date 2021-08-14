@@ -1,0 +1,18 @@
+{
+    "type": "section",
+    "block_id": "date",
+    "text": {
+        "type": "mrkdwn",
+        "text": "*date* の *time*"
+    },
+    "accessory": {
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "追加する",
+            "emoji": true
+        },
+        "value": "add",
+        "action_id": "member-add_date"
+    }
+}

@@ -1,0 +1,19 @@
+{
+	"type": "modal",
+	"callback_id": "set_schedules",
+	"title": {
+	  "type": "plain_text",
+	  "text": "時間調整"
+	},
+	"submit": {
+		"type": "plain_text",
+		"text": "設定する",
+		"emoji": true
+	},
+	"close": {
+		"type": "plain_text",
+		"text": "閉じる",
+		"emoji": true
+	},
+	"blocks": []
+}

@@ -1,0 +1,41 @@
+[
+    {
+        "type": "header",
+        "text": {
+            "type": "plain_text",
+            "text": "回答の公開範囲",
+            "emoji": true
+        }
+    },
+    {
+        "type": "input",
+        "block_id": "display_result",
+        "label": {
+            "type": "plain_text",
+            "text": " ",
+            "emoji": true
+        },
+        "element": {				
+            "type": "radio_buttons",
+            "action_id": "result-option",
+            "options": [
+                {
+                    "text": {
+                        "type": "plain_text",
+                        "text": "主催者だけに回答を送る",
+                        "emoji": true
+                    },
+                    "value": "host"
+                },
+                {
+                    "text": {
+                        "type": "plain_text",
+                        "text": "回答者に全員の回答を公開する",
+                        "emoji": true
+                    },
+                    "value": "all"
+                }
+            ]
+        }
+    }
+]

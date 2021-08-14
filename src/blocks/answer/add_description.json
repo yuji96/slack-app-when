@@ -1,0 +1,14 @@
+{
+    "type": "context",
+    "elements": [
+        {
+            "type": "mrkdwn",
+            "text": "作成者:"
+        },
+        {
+            "type": "image",
+            "image_url": " ",
+            "alt_text": ""
+        }
+    ]
+}

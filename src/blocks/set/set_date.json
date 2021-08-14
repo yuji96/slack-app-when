@@ -1,0 +1,46 @@
+[
+    {
+        "type": "header",
+        "text": {
+            "type": "plain_text",
+            "text": "開催したい日程",
+            "emoji": true
+        }
+    },
+    {
+        "type": "section",
+        "block_id": "start_date",
+        "text": {
+            "type": "mrkdwn",
+            "text": "この日から"
+        },
+        "accessory": {
+            "type": "datepicker",
+            "initial_date": "Today",
+            "placeholder": {
+                "type": "plain_text",
+                "text": "Select a date",
+                "emoji": true
+            },
+            "action_id": "host_datepicker-action"
+        }
+    },
+    {
+        "type": "section",
+        "block_id": "end_date",
+        "text": {
+            "type": "mrkdwn",
+            "text": "この日までの間に開催したい"
+        },
+        "accessory": {
+            "type": "datepicker",
+            "initial_date": "1990-04-28",
+            "placeholder": {
+                "type": "plain_text",
+                "text": "Select a date",
+                "emoji": true
+            },
+            "action_id": "host_datepicker-action"
+        }
+    }
+]
