@@ -6,11 +6,10 @@ from slack_sdk import WebClient
 
 from blocks.builder import modal_for_member
 from settings import set_logger
+from visualize import Table
 
 # TODO: デバッグ用で開発後には削除する
 from pprint import pprint
-
-from visualize import Table
 
 
 logger = set_logger(__name__)
@@ -45,15 +44,14 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
 
     ack()
 
-    member = body["user"]["id"]
+    # member = body["user"]["id"]
     header, *_ = filter(lambda b: b["type"] == "header", view["blocks"])
     host_channel, host_message_ts = header["block_id"].split("-")
 
-    client.chat_postMessage(text=f"<@{member}> が日程を回答しました。",
-                            channel=host_channel,
-                            thread_ts=host_message_ts,
-                            as_user=True)
+    parent_message, *replies = client.conversations_replies(
+        channel=host_channel, ts=host_message_ts)["messages"]
 
+    # TODO:入力の処理が汚いからクラス内でやる
     answer = {k: v["plain_text_input-action"]["value"] for k, v in view["state"]["values"].items()}
     header, input_, *_ = view["blocks"]
     start_date, *_, end_date = answer
@@ -61,7 +59,9 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
     table = Table(answer=answer, name=body["user"]["name"],
                   date_pair=(start_date, end_date),
                   time_pair=input_["element"]["initial_value"].split("-"))
-    print(table)
+
+    res = client.files_upload(content=table.visualize(), filetype="png",
+                              channels=host_channel, thread_ts=host_message_ts)
 
     # TODO:
     # host_message_ts を更新した画像を投稿

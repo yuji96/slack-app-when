@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv(join(dirname(__file__), '../.env'))
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
+# TODO: よく考えたらワークスペースによって変わるから定数は無理
 SLACK_BOT_ID = os.environ.get("SLACK_BOT_ID")
 PORT = int(os.environ.get("PORT", 3000))
 TMP_DIR = os.environ.get("TMP_DIR", join(dirname(__file__), './tmp/'))

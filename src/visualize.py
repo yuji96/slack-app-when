@@ -1,16 +1,19 @@
 from collections import namedtuple
 import dataclasses
 import datetime as dt
+import io
 import pickle
 import re
 
-import matplotlib.pyplot as plt
+import matplotlib
 import pandas as pd
-import requests
 import seaborn as sns
 from slack_sdk.web.client import WebClient
 
 from settings import TMP_DIR
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt  # noqa
 
 StartEnd = namedtuple('StartEnd', ['start', 'end'])
 
@@ -30,7 +33,7 @@ class Table:
             date = dt.datetime.strptime(date, "%Y-%m-%d").date()
             self.slots.extend(self.input_to_datetime(date, text))
 
-        if df:
+        if df is not None:
             self.df = self.update_df(df)
         elif file_url and client:
             self.df = self.download(file_url, client)
@@ -87,13 +90,13 @@ class Table:
             df.loc[s:e, self.name] = True
         return df
 
-    def visualize(self):
+    def visualize(self, debug=False):
         # TODO: レイアウトの調整
         table = self.table
         # w = len(table.columns)
         # figsize = np.array(table.T.shape) * 10.5 / w
         dates = table.index.get_level_values("date").unique()
-        _, axes = plt.subplots(nrows=dates.size, sharex=True)
+        fig, axes = plt.subplots(nrows=dates.size, sharex=True)
         for i, (ax, date) in enumerate(zip(axes, dates)):
             # TODO: 最小値 == white ではなく、0 == white にする。
             g = sns.heatmap(table.loc[(date, slice(None))],
@@ -107,8 +110,13 @@ class Table:
         # g.set_xticklabels(table.columns.map(lambda t: str(t.hour) if t.minute == 0 else ""),
         #                   rotation=0)
         plt.tight_layout()
-        plt.show()
-        # plt.savefig(f"{TMP_DIR}/table.png")
+        if debug:
+            plt.show()
+        else:
+            stream = io.BytesIO()
+            plt.savefig(stream, format="png")
+            plt.close(fig)
+            return stream.getvalue()
 
     @property
     def table(self):
@@ -126,10 +134,11 @@ class Table:
         return df
 
     def upload(self, channels, client: WebClient):
-        # TODO: 中間ファイルがないのが理想
-        self.df.to_pickle(f"{TMP_DIR}/table.png")
-        res = client.files_upload(channels=channels, file=f"{TMP_DIR}/table.png")
-        return res["url_private_download"]
+        # TODO: 中間ファイルがないのが理想 import tempfile
+        self.df.to_pickle(f"{TMP_DIR}/table.pkl")
+        res = client.files_upload(channels=channels, file=f"{TMP_DIR}/table.pkl")
+        return res["file"]["url_private_download"]
+
 
 
 if __name__ == "__main__":
