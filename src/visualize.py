@@ -1,5 +1,4 @@
 from collections import namedtuple
-import dataclasses
 import datetime as dt
 import io
 import pickle
@@ -7,8 +6,8 @@ import re
 
 import matplotlib
 import pandas as pd
+import requests
 import seaborn as sns
-from slack_sdk.web.client import WebClient
 
 from settings import TMP_DIR
 
@@ -18,14 +17,14 @@ import matplotlib.pyplot as plt  # noqa
 StartEnd = namedtuple('StartEnd', ['start', 'end'])
 
 
-@dataclasses.dataclass
 class Table:
-    def __init__(self, answer, name, date_pair, time_pair,
-                 df=None, file_url=None, client=None):
+    def __init__(self, answer, name, date_pair, time_pair, client,
+                 df=None, file_url=None):
         self.name = name
         self.date_pair = StartEnd(*[dt.datetime.strptime(d, "%Y-%m-%d").date() for d in date_pair])
         start, end = [dt.datetime.strptime(t, "%H:%M").time() for t in time_pair]
         self.time_pair = StartEnd(start.replace(minute=0), end)
+        self.client = client
 
         self.slots = []  # TODO: yield from?
         for date, text in answer.items():
@@ -35,8 +34,8 @@ class Table:
 
         if df is not None:
             self.df = self.update_df(df)
-        elif file_url and client:
-            self.df = self.download(file_url, client)
+        elif file_url:
+            self.df = self.download(file_url)
         else:
             self.df = self.create_df()
 
@@ -128,17 +127,15 @@ class Table:
         table = df.unstack(level="time").stack(level="name").loc[:, start:end]
         return table.astype(int) + table.groupby(level="date").all()
 
-    def download(self, file_url, client):
-        res = requests.get(file_url, headers=dict(Authorization=f"Bearer {client.token}"))
-        df = pickle.loads(res.content)
-        return df
+    def download(self, file_url):
+        res = requests.get(file_url, headers=dict(Authorization=f"Bearer {self.client.token}"))
+        return pickle.loads(res.content)
 
-    def upload(self, channels, client: WebClient):
+    def upload(self, channels):
         # TODO: 中間ファイルがないのが理想 import tempfile
         self.df.to_pickle(f"{TMP_DIR}/table.pkl")
-        res = client.files_upload(channels=channels, file=f"{TMP_DIR}/table.pkl")
-        return res["file"]["url_private_download"]
-
+        res = self.client.files_upload(channels=channels, file=f"{TMP_DIR}/table.pkl")
+        return res["file"]["id"]
 
 
 if __name__ == "__main__":

@@ -50,23 +50,34 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
 
     parent_message, *replies = client.conversations_replies(
         channel=host_channel, ts=host_message_ts)["messages"]
+    team_id = parent_message["team"]
+    bot_user_id = parent_message["user"]
 
-    # TODO:入力の処理が汚いからクラス内でやる
-    answer = {k: v["plain_text_input-action"]["value"] for k, v in view["state"]["values"].items()}
-    header, input_, *_ = view["blocks"]
+    answer = {k: v["plain_text_input-action"]["value"]
+              for k, v in view["state"]["values"].items()}
+    _, input_, *_ = view["blocks"]
     start_date, *_, end_date = answer
-    # TODO: username と name の違いとは？ display name はとれない？
-    table = Table(answer=answer, name=body["user"]["name"],
-                  date_pair=(start_date, end_date),
-                  time_pair=input_["element"]["initial_value"].split("-"))
 
-    res = client.files_upload(content=table.visualize(), filetype="png",
-                              channels=host_channel, thread_ts=host_message_ts)
+    if not replies:
+        # TODO: username と name の違いとは？ display name はとれない？
+        table = Table(answer=answer, name=body["user"]["name"],
+                      date_pair=(start_date, end_date),
+                      time_pair=input_["element"]["initial_value"].split("-"),
+                      client=client)
+    else:
+        bot_msg, *_ = [msg for msg in replies if msg["user"] == bot_user_id]
+        old_pkl_id = bot_msg["files"][0]["title"]
+        table = Table(answer=answer, name=body["user"]["name"],
+                      date_pair=(start_date, end_date),
+                      time_pair=input_["element"]["initial_value"].split("-"),
+                      client=client,
+                      file_url=f"https://files.slack.com/files-pri/{team_id}-{old_pkl_id}/download/table.pkl")
 
-    # TODO:
-    # host_message_ts を更新した画像を投稿
-    # URLを埋め込む
+    new_pkl_id = table.upload(bot_user_id)
+    client.files_upload(content=table.visualize(), filetype="png", title=new_pkl_id,
+                        channels=host_channel, thread_ts=host_message_ts)
 
+    # TODO: 更新した時に古いファイルを削除したい
 
 def send_no_answer(ack: Ack, body: dict, client: WebClient):
     """参加できない と主催者に送信する．"""
