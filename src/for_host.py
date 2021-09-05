@@ -71,6 +71,7 @@ def ask_schedule(ack: Ack, body: dict, client: WebClient, view: dict):
         button["value"] = f"{response['channel']}-{response['ts']}"
 
     # 選択したユーザ・チャンネル にメッセージを送信する
+    # TODO: チャンネルの場合はbotを招待する
     for item in data.members:
         client.chat_postMessage(channel=item,
                                 text="日程調整に回答してください",
