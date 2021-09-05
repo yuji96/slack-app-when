@@ -44,12 +44,13 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
 
     ack()
 
-    # member = body["user"]["id"]
     header, *_ = filter(lambda b: b["type"] == "header", view["blocks"])
     host_channel, host_message_ts = header["block_id"].split("-")
 
     parent_message, *replies = client.conversations_replies(
         channel=host_channel, ts=host_message_ts)["messages"]
+    user_display_name = client.users_info(
+        user=body["user"]["id"])["user"]["profile"]["display_name"]
     team_id = parent_message["team"]
     bot_user_id = parent_message["user"]
 
@@ -59,20 +60,20 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
     start_date, *_, end_date = answer
 
     if not replies:
-        # TODO: username と name の違いとは？ display name はとれない？
-        table = Table(answer=answer, name=body["user"]["name"],
+        table = Table(answer=answer, name=user_display_name,
                       date_pair=(start_date, end_date),
                       time_pair=input_["element"]["initial_value"].split("-"),
                       client=client)
     else:
         bot_msg, *_ = [msg for msg in replies if msg["user"] == bot_user_id]
         old_file = bot_msg["files"][0]
-        table = Table(answer=answer, name=body["user"]["name"],
+        table = Table(answer=answer, name=user_display_name,
                       date_pair=(start_date, end_date),
                       time_pair=input_["element"]["initial_value"].split("-"),
                       client=client,
                       file_url=f"https://files.slack.com/files-pri/{team_id}-{old_file['title']}/download/table.pkl")
 
+    # TODO: 一緒にしてもいいのでは？
     new_pkl_id = table.upload(bot_user_id)
     client.files_upload(content=table.visualize(), filetype="png", title=new_pkl_id,
                         channels=host_channel, thread_ts=host_message_ts)
