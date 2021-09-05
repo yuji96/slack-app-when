@@ -66,18 +66,20 @@ def recieve_answer(ack: Ack, body: dict, client: WebClient, view: dict):
                       client=client)
     else:
         bot_msg, *_ = [msg for msg in replies if msg["user"] == bot_user_id]
-        old_pkl_id = bot_msg["files"][0]["title"]
+        old_file = bot_msg["files"][0]
         table = Table(answer=answer, name=body["user"]["name"],
                       date_pair=(start_date, end_date),
                       time_pair=input_["element"]["initial_value"].split("-"),
                       client=client,
-                      file_url=f"https://files.slack.com/files-pri/{team_id}-{old_pkl_id}/download/table.pkl")
+                      file_url=f"https://files.slack.com/files-pri/{team_id}-{old_file['title']}/download/table.pkl")
 
     new_pkl_id = table.upload(bot_user_id)
     client.files_upload(content=table.visualize(), filetype="png", title=new_pkl_id,
                         channels=host_channel, thread_ts=host_message_ts)
 
-    # TODO: 更新した時に古いファイルを削除したい
+    client.files_delete(file=old_file["id"])
+    client.files_delete(file=old_file["title"])
+
 
 def send_no_answer(ack: Ack, body: dict, client: WebClient):
     """参加できない と主催者に送信する．"""
