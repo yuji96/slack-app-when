@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 
 from blocks.base import (
-    Action, Button, ChannelsSelect, DatePicker, Header, Modal, PlainTextInput, RadioButtons,
-    Section, TimePicker, UsersSelect
+    Actions, Button, ChannelsSelect, Datepicker, Header, Modal, PlainTextInput, RadioButtons,
+    Section, Timepicker, MultiUsersSelect
 )
 
 
@@ -13,7 +13,7 @@ def message_from_host(host_id, start_date, end_date, start_time, end_time,
                 Section(f"*主催者:*\n<@{host_id}>", block_id="host"),
                 Section(f"*開催日:*\n{start_date} から {end_date}", block_id="date"),
                 Section(f"*開催時間:*\n{start_time} から {end_time}", block_id="time")]
-    action = Action(Button(action_id="answer_schedule", value="answer_schedule",
+    action = Actions(Button(action_id="answer_schedule", value="answer_schedule",
                            text="回答する", style="primary"),
                     Button(action_id="not_answer", value="answer_schedule",
                            text="不参加", style="danger"))
@@ -31,21 +31,21 @@ def modal_for_host(callback_id: str):
     modal = Modal(callback_id=callback_id, title="時間調整", submit="送信する", blocks=[
         Header("開催したい日程"),
         Section("この日から", block_id="start_date",
-                accessory=DatePicker(action_id="host_datepicker-action", initial=today.date())),
+                accessory=Datepicker(action_id="host_datepicker-action", initial=today.date())),
         Section("この日までの間に開催したい", block_id="end_date",
-                accessory=DatePicker(action_id="host_datepicker-action", initial=tomorrow.date())),
+                accessory=Datepicker(action_id="host_datepicker-action", initial=tomorrow.date())),
         Header("開催可能な時間帯"),
         Section("この時刻から", block_id="start_time",
-                accessory=TimePicker(action_id="host_timepicker-action", initial="06:00")),
+                accessory=Timepicker(action_id="host_timepicker-action", initial="06:00")),
         Section("この時刻まで", block_id="end_time",
-                accessory=TimePicker(action_id="host_timepicker-action", initial="23:00"))
+                accessory=Timepicker(action_id="host_timepicker-action", initial="23:00"))
     ])
     if target == "channel":
         modal["blocks"].extend([Header("回答チャンネル"),
                                 ChannelsSelect(block_id="channel_select")])
     elif target == "im":
         modal["blocks"].extend([Header("回答者"),
-                                UsersSelect(block_id="users_select",
+                                MultiUsersSelect(block_id="users_select",
                                             action_id="multi_users_select-action")])
 
     # チャンネル用の共有設定 のブロック

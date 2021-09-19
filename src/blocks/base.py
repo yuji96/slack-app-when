@@ -1,68 +1,69 @@
 import json
+import re
+
+
+def camel_to_snake(case):
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', case).lower()
 
 
 class Text(dict):
-    TEXT_TYPE = None
-
     def __init__(self, text, *args, **kwargs):
-        super().__init__(type=self.TEXT_TYPE, text=text, *args, **kwargs)
+        super().__init__(type=self.text_type, text=text, *args, **kwargs)
+
+    @property
+    def text_type(self):
+        return camel_to_snake(self.__class__.__name__)
 
 
 class PlainText(Text):
-    TEXT_TYPE = "plain_text"
+    pass
 
 
-class MarkDown(Text):
-    TEXT_TYPE = "mrkdwn"
+class MrkDwn(Text):
+    pass
 
 
 class Json(dict):
     def __str__(self) -> str:
         return json.dumps(self, indent=4)
 
+    @property
+    def type(self):
+        return camel_to_snake(self.__class__.__name__)
+
 
 class Modal(Json):
     def __init__(self, callback_id, title, submit, blocks=[], *args, **kwargs):
-        super().__init__(type="modal", callback_id=callback_id,
+        super().__init__(type=self.type, callback_id=callback_id,
                          title=PlainText(title), submit=PlainText(submit),
                          blocks=blocks, *args, **kwargs)
 
 
 class Block(Json):
-    TYPE = None
-
     def __init__(self, block_id=None, accessory=None, *args, **kwargs):
-        super().__init__(type=self.TYPE, *args, **kwargs)
+        super().__init__(type=self.type, *args, **kwargs)
         if block_id:
             self["block_id"] = block_id
         if accessory:
             self["accessory"] = accessory
 
 
-class Action(Block):
-    TYPE = "actions"
-
+class Actions(Block):
     def __init__(self, *elements):
         super().__init__(elements=list(elements))
 
 
 class Section(Block):
-    TYPE = "section"
-
     def __init__(self, text, *args, **kwargs):
-        super().__init__(text=MarkDown(text), *args, **kwargs)
+        super().__init__(text=MrkDwn(text), *args, **kwargs)
 
 
 class Header(Block):
-    TYPE = "header"
-
     def __init__(self, text, *args, **kwargs):
         super().__init__(text=PlainText(text), *args, **kwargs)
 
 
 class Button(Block):
-    TYPE = "button"
-
     def __init__(self, action_id, value, text, style, *args, **kwargs):
         super().__init__(text=PlainText(text),
                          style=style, value=value, action_id=action_id,
@@ -74,30 +75,32 @@ class Picker(Block):
         super().__init__(action_id=action_id, *args, **kwargs)
         self[self.initial_field] = str(initial)
 
+    @property
+    def initial_field(self):
+        category = re.match(r"(.+)picker", self.__class__.__name__).group(1).lower()
+        return f"initial_{category}"
 
-class DatePicker(Picker):
-    TYPE = "datepicker"
-    initial_field = "initial_date"
+
+class Datepicker(Picker):
+    pass
 
 
-class TimePicker(Picker):
-    TYPE = "timepicker"
-    initial_field = "initial_time"
+class Timepicker(Picker):
+    pass
 
 
 class Input(Block):
-    TYPE = "input"
-    ELEMENT_TYPE = None
-
     def __init__(self, action_id=None, label=" ", optional=False, *args, **kwargs):
         super().__init__(optional=optional,
-                         element=dict(type=self.ELEMENT_TYPE, action_id=action_id),
+                         element=dict(type=self.element_type, action_id=action_id),
                          label=PlainText(label), *args, **kwargs)
+
+    @property
+    def element_type(self):
+        return camel_to_snake(self.__class__.__name__)
 
 
 class PlainTextInput(Input):
-    ELEMENT_TYPE = "plain_text_input"
-
     def __init__(self, initial=None, placeholder=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if initial:
@@ -107,16 +110,14 @@ class PlainTextInput(Input):
 
 
 class ChannelsSelect(Input):
-    ELEMENT_TYPE = "channels_select"
+    pass
 
 
-class UsersSelect(Input):
-    ELEMENT_TYPE = "multi_users_select"
+class MultiUsersSelect(Input):
+    pass
 
 
 class RadioButtons(Input):
-    ELEMENT_TYPE = "radio_buttons"
-
     def __init__(self, options, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self["element"]["options"] = [dict(text=PlainText(text), value=value)
