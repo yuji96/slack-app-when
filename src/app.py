@@ -1,9 +1,8 @@
 from slack_bolt import App
 
-import for_host
-import for_member
+from scheduler import private
 import settings
-from settings import SLACK_BOT_ID, set_logger
+from settings import set_logger
 
 
 logger = set_logger(__name__)
@@ -13,14 +12,17 @@ app = App(
     logger=logger,
 )
 
-for_host.register(app)
-for_member.register(app)
+private.register(app)
+
+# HACK: 毎回必要な変数はos.environに設定するのが良いかも
 
 
 # TODO: スレッドごと消したい
 @app.event("reaction_added")
 def ask_for_introduction(event, *args, **kwargs):
-    if event["reaction"] == "put_litter_in_its_place" and event["item_user"] == SLACK_BOT_ID:
+    print(event["item_user"])
+    if (event["reaction"] == "put_litter_in_its_place"
+            and event["item_user"] == settings.SLACK_BOT_ID):
         app.client.chat_delete(channel=event["item"]["channel"],
                                ts=event["item"]["ts"])
 

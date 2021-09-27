@@ -1,7 +1,7 @@
 from typing import Iterable
 
 
-class Data(dict):  # TODO: 名前の再考
+class SchedulerCreationFormData(dict):
     def __init__(self, body: dict, view: dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.body = body

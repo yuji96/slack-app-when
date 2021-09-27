@@ -19,7 +19,7 @@ class PlainText(Text):
     pass
 
 
-class MrkDwn(Text):
+class Mrkdwn(Text):
     pass
 
 
@@ -41,7 +41,8 @@ class Modal(Json):
 
 class Block(Json):
     def __init__(self, block_id=None, accessory=None, *args, **kwargs):
-        super().__init__(type=self.type, *args, **kwargs)
+        kwargs.setdefault("type", self.type)
+        super().__init__(*args, **kwargs)
         if block_id:
             self["block_id"] = block_id
         if accessory:
@@ -55,7 +56,7 @@ class Actions(Block):
 
 class Section(Block):
     def __init__(self, text, *args, **kwargs):
-        super().__init__(text=MrkDwn(text), *args, **kwargs)
+        super().__init__(text=Mrkdwn(text), *args, **kwargs)
 
 
 class Header(Block):
@@ -91,7 +92,8 @@ class Timepicker(Picker):
 
 class Input(Block):
     def __init__(self, action_id=None, label=" ", optional=False, *args, **kwargs):
-        super().__init__(optional=optional,
+        super().__init__(type="input",
+                         optional=optional,
                          element=dict(type=self.element_type, action_id=action_id),
                          label=PlainText(label), *args, **kwargs)
 
