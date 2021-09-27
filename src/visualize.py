@@ -26,9 +26,9 @@ class Table:
         self.time_pair = StartEnd(start.replace(minute=0), end)
         self.client = client
 
-        self.slots = []  # TODO: yield from?
+        self.slots = []
         for date, text in answer.items():
-            # TODO: datetimeへの型変換のリファクタが必要
+            # TODO: datetimeへの型変換のリファクタが必要。slotsの生成はyield fromを使う？
             date = dt.datetime.strptime(date, "%Y-%m-%d").date()
             self.slots.extend(self.input_to_datetime(date, text))
 

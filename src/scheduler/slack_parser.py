@@ -1,24 +1,17 @@
-from typing import Iterable
-
-
 class SchedulerCreationFormData(dict):
-    def __init__(self, body: dict, view: dict, *args, **kwargs):
+    def __init__(self, body: dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.body = body
-        self.view = view
-        self.values_ = view["state"]["values"]
+        self.values_ = body["view"]["state"]["values"]
         self.set_modal_inputs()
 
     @property
-    def members(self) -> Iterable:
-        target = self.body["view"]["callback_id"]
-        if target == 'set_schedules-im':
-            yield from self.values_["users_select"]["multi_users_select-action"]["selected_users"]
-        else:
-            # TODO: こっちの実装が複雑になった理由って action_id 指定しなかったからではないか
-            for val in self.values_["channel_select"].values():
-                if channel := val.get("selected_channel"):
-                    yield channel
+    def members(self) -> list[str]:
+        return self.values_["users_select"]["multi_users_select-action"]["selected_users"]
+
+    @property
+    def channel(self) -> str:
+        return self.values_["channel_select"]["channels_select-action"]["selected_channel"]
 
     def set_modal_inputs(self):
         values = self.values_

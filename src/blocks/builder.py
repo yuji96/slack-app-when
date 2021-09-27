@@ -13,9 +13,10 @@ def message_from_host(host_id, start_date, end_date, start_time, end_time,
                 Section(f"*主催者:*\n<@{host_id}>", block_id="host"),
                 Section(f"*開催日:*\n{start_date} から {end_date}", block_id="date"),
                 Section(f"*開催時間:*\n{start_time} から {end_time}", block_id="time")]
-    action = Actions(Button(action_id="answer_schedule", value="answer_schedule",
+    # FIXME: im と channel で別の id にしなければならない。
+    action = Actions(Button(action_id="answer_schedule", value="undefined",
                             text="回答する", style="primary"),
-                     Button(action_id="not_answer", value="answer_schedule",
+                     Button(action_id="not_answer", value="undefined",
                             text="不参加", style="danger"))
     if setting:
         sections.append(Section(f"*回答設定:*\n{setting}", block_id="setting"))
@@ -42,18 +43,16 @@ def modal_for_host(callback_id: str):
     ])
     if target == "channel":
         modal["blocks"].extend([Header("回答チャンネル"),
-                                ChannelsSelect(block_id="channel_select")])
+                                ChannelsSelect(block_id="channel_select",
+                                               action_id="channels_select-action"),
+                                Header("回答の公開範囲"),
+                                RadioButtons(block_id="display_result", action_id="result-option",
+                                             options=[("主催者だけに回答を送る", "host"),
+                                                      ("回答者に全員の回答を公開する", "all")])])
     elif target == "im":
         modal["blocks"].extend([Header("回答者"),
                                 MultiUsersSelect(block_id="users_select",
                                                  action_id="multi_users_select-action")])
-
-    # チャンネル用の共有設定のブロック
-    if target == "channel":
-        modal["blocks"].extend([Header("回答の公開範囲"),
-                                RadioButtons(block_id="display_result", action_id="result-option",
-                                             options=[("主催者だけに回答を送る", "host"),
-                                                      ("回答者に全員の回答を公開する", "all")])])
 
     return modal
 

@@ -1,6 +1,6 @@
 from slack_bolt import App
 
-from scheduler import private
+from scheduler import common, private, public
 import settings
 from settings import set_logger
 
@@ -11,16 +11,16 @@ app = App(
     signing_secret=settings.SLACK_SIGNING_SECRET,
     logger=logger,
 )
-
-private.register(app)
-
 # HACK: 毎回必要な変数はos.environに設定するのが良いかも
 
+common.register(app)
+private.register(app)
+public.register(app)
 
-# TODO: スレッドごと消したい
+
+# HACK: スレッドごと消したい
 @app.event("reaction_added")
 def ask_for_introduction(event, *args, **kwargs):
-    print(event["item_user"])
     if (event["reaction"] == "put_litter_in_its_place"
             and event["item_user"] == settings.SLACK_BOT_ID):
         app.client.chat_delete(channel=event["item"]["channel"],
