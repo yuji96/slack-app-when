@@ -6,6 +6,7 @@ from slack_sdk import WebClient
 
 from blocks.builder import modal_for_host, modal_for_member
 from settings import set_logger
+from visualize import Table
 
 logger = set_logger(__name__)
 
@@ -19,6 +20,7 @@ def register(app: App):
 
     # 参加者用
     app.action("answer_schedule")(show_answer_modal)
+    app.view("answer_schedule")(handle_answer_modal)
 
 
 def show_scheduling_form(ack: Ack, body: dict, client: WebClient) -> dict:
@@ -39,3 +41,46 @@ def show_answer_modal(ack: Ack, body: dict, client: WebClient):
     client.views_open(trigger_id=body["trigger_id"],
                       view=modal_for_member("answer_schedule",
                                             date_range, start_time, end_time, host_info))
+
+
+def handle_answer_modal(ack: Ack, body: dict, client: WebClient, view: dict):
+    """回答用 Modal の提出を確認する．"""
+
+    ack()
+
+    header, *_ = filter(lambda b: b["type"] == "header", view["blocks"])
+    host_channel, host_message_ts = header["block_id"].split("-")
+
+    parent_message, *replies = client.conversations_replies(
+        channel=host_channel, ts=host_message_ts)["messages"]
+    user_display_name = client.users_info(
+        user=body["user"]["id"])["user"]["profile"]["display_name"]
+    team_id = parent_message["team"]
+    bot_user_id = parent_message["user"]
+
+    answer = {k: v["plain_text_input-action"]["value"]
+              for k, v in view["state"]["values"].items()}
+    _, input_, *_ = view["blocks"]
+    start_date, *_, end_date = answer
+
+    if not replies:
+        table = Table(answer=answer, name=user_display_name,
+                      date_pair=(start_date, end_date),
+                      time_pair=input_["element"]["initial_value"].split("-"),
+                      client=client)
+    else:
+        bot_msg, *_ = [msg for msg in replies if msg["user"] == bot_user_id]
+        old_file = bot_msg["files"][0]
+        table = Table(answer=answer, name=user_display_name,
+                      date_pair=(start_date, end_date),
+                      time_pair=input_["element"]["initial_value"].split("-"),
+                      client=client,
+                      file_url=f"https://files.slack.com/files-pri/{team_id}-{old_file['title']}/download/table.pkl")  # noqa
+
+        client.files_delete(file=old_file["id"])
+        client.files_delete(file=old_file["title"])
+
+    # HACK: 下の２行は一緒にしてもいいのでは？
+    new_pkl_id = table.upload(bot_user_id)
+    client.files_upload(content=table.visualize(), filetype="png", title=new_pkl_id,
+                        channels=host_channel, thread_ts=host_message_ts)

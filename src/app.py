@@ -1,6 +1,6 @@
 from slack_bolt import App
 
-from scheduler import common, private, public
+from scheduler import common, im, channel
 import settings
 from settings import set_logger
 
@@ -14,8 +14,8 @@ app = App(
 # HACK: 毎回必要な変数はos.environに設定するのが良いかも
 
 common.register(app)
-private.register(app)
-public.register(app)
+im.register(app)
+channel.register(app)
 
 
 # HACK: スレッドごと消したい

@@ -7,14 +7,13 @@ from blocks.base import (
 
 
 def message_from_host(host_id, start_date, end_date, start_time, end_time,
-                      setting=None, *args, **kwargs):
+                      action_id="answer_schedule", setting=None, *args, **kwargs):
     header = Header("時間調整のご協力")
     sections = [Section("以下の内容で時間調整を行います。"),
                 Section(f"*主催者:*\n<@{host_id}>", block_id="host"),
                 Section(f"*開催日:*\n{start_date} から {end_date}", block_id="date"),
                 Section(f"*開催時間:*\n{start_time} から {end_time}", block_id="time")]
-    # FIXME: im と channel で別の id にしなければならない。
-    action = Actions(Button(action_id="answer_schedule", value="undefined",
+    action = Actions(Button(action_id=action_id, value="undefined",
                             text="回答する", style="primary"),
                      Button(action_id="not_answer", value="undefined",
                             text="不参加", style="danger"))
