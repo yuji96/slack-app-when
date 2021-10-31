@@ -1,0 +1,4 @@
+slack-bolt
+coloredlogs
+pandas
+seaborn
