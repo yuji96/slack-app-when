@@ -14,6 +14,8 @@ SLACK_BOT_ID = os.environ.get("SLACK_BOT_ID")
 PORT = int(os.environ.get("PORT", 3000))
 TMP_DIR = os.environ.get("TMP_DIR", join(dirname(__file__), './tmp/'))
 
+# TODO: callback_id はすべてここで定義する。
+
 
 def set_logger(name, level="INFO"):
     logger = getLogger(name)
