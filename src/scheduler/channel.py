@@ -1,10 +1,10 @@
 from slack_bolt import Ack, App
 from slack_sdk import WebClient
 
+from blocks.base import Header
 from blocks.builder import message_from_host
 from settings import set_logger
 from .slack_parser import SchedulerCreationFormData
-from visualize import Table
 
 logger = set_logger(__name__)
 
@@ -29,19 +29,26 @@ def handle_scheduling_form(ack: Ack, body: dict, client: WebClient, view: dict):
     client.conversations_join(channel=data.channel)
 
     header, *sections, actions = message_from_host(**data)
-    response = client.chat_postMessage(channel=data.channel,
+    announce = client.chat_postMessage(channel=data.channel,
                                        text="日程調整に回答してください",
                                        blocks=[header, *sections, actions],
                                        as_user=True)
 
-    # FIXME: ここの channel-ts が公開設定で変わる。
+    if data["setting_value"] == "host":
+        ans_reciever = client.chat_postMessage(channel=data["host_id"],
+                                               text="日程調整を作成しました",
+                                               blocks=[Header("時間調整の詳細"), *sections],
+                                               as_user=True)
+    else:
+        ans_reciever = announce
+
     # 主催者と主催メッセージの情報を追加する
     for button in actions["elements"]:
-        button["value"] = f"{response['channel']}-{response['ts']}"
+        button["value"] = f"{ans_reciever['channel']}-{ans_reciever['ts']}"
 
     # 選択したチャンネルにメッセージを送信する
-    client.chat_update(channel=response['channel'],
-                       ts=response['ts'],
+    client.chat_update(channel=announce['channel'],
+                       ts=announce['ts'],
                        text="日程調整に回答してください",
                        blocks=[header, *sections, actions],
                        as_user=True)
