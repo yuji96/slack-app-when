@@ -3,10 +3,12 @@ import os
 from os.path import join, dirname
 
 import coloredlogs
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    load_dotenv(join(dirname(__file__), '../.env'))
+except ModuleNotFoundError:
+    pass
 
-
-load_dotenv(join(dirname(__file__), '../.env'))
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 # TODO: よく考えたらワークスペースによって変わるから定数は無理
