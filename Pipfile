@@ -8,6 +8,7 @@ slack-bolt = "*"
 coloredlogs = "*"
 pandas = "*"
 seaborn = "*"
+requests = "*"
 
 [dev-packages]
 python-dotenv = "*"
@@ -17,3 +18,4 @@ python_version = "3.9"
 
 [scripts]
 server = "ngrok http 3000"
+logs = "heroku logs -a slack-app-when "
