@@ -14,6 +14,7 @@ SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 # TODO: よく考えたらワークスペースによって変わるから定数は無理
 SLACK_BOT_ID = os.environ.get("SLACK_BOT_ID")
 PORT = int(os.environ.get("PORT", 3000))
+DEBUG = bool(int(os.environ.get("DEBUG", 0)))
 TMP_DIR = os.environ.get("TMP_DIR", join(dirname(__file__), './tmp/'))
 
 # TODO: callback_id はすべてここで定義する。
