@@ -1,0 +1,6 @@
+Flask
+slack-bolt
+coloredlogs
+pandas
+seaborn
+requests

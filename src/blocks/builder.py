@@ -25,7 +25,7 @@ def message_from_host(host_id, start_date, end_date, start_time, end_time,
 def modal_for_host(callback_id: str):
     today = datetime.today()
     tomorrow = today + timedelta(days=1)
-    target = callback_id.removeprefix("set_schedules-")
+    target = callback_id[len("set_schedules-"):]
 
     # HACK: SectionではなくInputのDatepickerに置き換える
     modal = Modal(callback_id=callback_id, title="時間調整", submit="送信する", blocks=[

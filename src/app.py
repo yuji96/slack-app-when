@@ -1,4 +1,6 @@
+from flask import Flask, request
 from slack_bolt import App
+from slack_bolt.adapter.flask import SlackRequestHandler
 
 from scheduler import common, im, channel
 import settings
@@ -27,4 +29,20 @@ def ask_for_introduction(event, *args, **kwargs):
                                ts=event["item"]["ts"])
 
 
-app.start(port=settings.PORT)
+flask_app = Flask(__name__)
+handler = SlackRequestHandler(app)
+
+
+@flask_app.route("/slack/events", methods=["POST"])
+def slack_events():
+    return handler.handle(request)
+
+
+@flask_app.route("/")
+def hello():
+    return "Hello, World!"
+
+
+if __name__ == "__main__":
+    # app.start(port=settings.PORT)
+    flask_app.run(host="0.0.0.0", port=settings.PORT)

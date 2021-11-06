@@ -6,7 +6,7 @@ class SchedulerCreationFormData(dict):
         self.set_modal_inputs()
 
     @property
-    def members(self) -> list[str]:
+    def members(self):
         return self.values_["users_select"]["multi_users_select-action"]["selected_users"]
 
     @property
