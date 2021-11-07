@@ -48,7 +48,12 @@ class AnswerFormData:
 
     def generate_slots(self):
         def to_datetime(date: str, str_time: str) -> dt.datetime:
-            format = "%H:%M" if ":" in str_time else "%H%M"
+            if len(str_time) <= 2:
+                format = "%H"
+            elif ":" in str_time:
+                format = "%H:%M"
+            else:
+                format = "%H%M"
             try:
                 time = dt.datetime.strptime(str_time, format).time()
             except ValueError:
@@ -58,13 +63,17 @@ class AnswerFormData:
 
         for date, text in self._answer.items():
             # TODO: 半角に変換
-            # TODO: `15:00-` に対応する
+            if text is None:
+                continue
+
             text = re.sub(r"\s*([:\-~,])\s*", r"\1", text)
             str_slots = text.split(",")
+            # TODO: 末尾に変な文字が入ったら除去
+            # HACK: そもそも削るんじゃなくて抽出する実装のほうがきれい
 
             for str_start, str_end in map(lambda slot: re.split(r"[\-~]", slot), str_slots):
-                start = to_datetime(date, str_start)
-                end = to_datetime(date, str_end)
+                start = to_datetime(date, str_start or "00:00")
+                end = to_datetime(date, str_end or "23:30")
                 if end <= start:
                     raise AnswerFormException({date: f"`{str_start}-{str_end}` の入力が正しくありません。"})
                 yield (start, end)
