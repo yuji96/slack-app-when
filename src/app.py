@@ -44,5 +44,7 @@ def hello():
 
 
 if __name__ == "__main__":
-    # app.start(port=settings.PORT)
-    flask_app.run(host="0.0.0.0", port=settings.PORT)
+    if settings.DEBUG:
+        app.start(port=settings.PORT)
+    else:
+        flask_app.run(host="0.0.0.0", port=settings.PORT)

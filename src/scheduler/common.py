@@ -7,6 +7,7 @@ from slack_sdk import WebClient
 from blocks.builder import modal_for_host, modal_for_member
 from settings import set_logger
 from visualize import Table
+from .slack_parser import AnswerFormData, AnswerFormException
 
 logger = set_logger(__name__)
 
@@ -45,8 +46,12 @@ def show_answer_modal(ack: Ack, body: dict, client: WebClient):
 
 def handle_answer_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     """回答用 Modal の提出を確認する．"""
-
-    ack()
+    try:
+        answer = AnswerFormData(view)
+        ack()
+    except AnswerFormException as e:
+        ack(response_action="errors", errors=e.args[0])
+        return
 
     header, *_ = filter(lambda b: b["type"] == "header", view["blocks"])
     host_channel, host_message_ts = header["block_id"].split("-")
@@ -58,23 +63,12 @@ def handle_answer_modal(ack: Ack, body: dict, client: WebClient, view: dict):
     team_id = parent_message["team"]
     bot_user_id = parent_message["user"]
 
-    answer = {k: v["plain_text_input-action"]["value"]
-              for k, v in view["state"]["values"].items()}
-    _, input_, *_ = view["blocks"]
-    start_date, *_, end_date = answer
-
     if not replies:
-        table = Table(answer=answer, name=user_display_name,
-                      date_pair=(start_date, end_date),
-                      time_pair=input_["element"]["initial_value"].split("-"),
-                      client=client)
+        table = Table(answer=answer, name=user_display_name, client=client)
     else:
         bot_msg, *_ = [msg for msg in replies if msg["user"] == bot_user_id]
         old_file = bot_msg["files"][0]
-        table = Table(answer=answer, name=user_display_name,
-                      date_pair=(start_date, end_date),
-                      time_pair=input_["element"]["initial_value"].split("-"),
-                      client=client,
+        table = Table(answer=answer, name=user_display_name, client=client,
                       file_url=f"https://files.slack.com/files-pri/{team_id}-{old_file['title']}/download/table.pkl")  # noqa
 
         client.files_delete(file=old_file["id"])
