@@ -47,13 +47,13 @@ class Table:
         df = pd.DataFrame({self.name: False}, index=index)
         df.columns.set_names("name", inplace=True)
         for s, e in self.slots:
-            df.loc[s:e, self.name] = True  # TODO: `-6:01`という回答が`6:00-6:30`と解釈される．
+            df.loc[s:e, self.name].iloc[:-1] = True
         return df
 
     def update_df(self, df: pd.DataFrame):
         df[self.name] = False
         for s, e in self.slots:
-            df.loc[s:e, self.name] = True
+            df.loc[s:e, self.name].iloc[:-1] = True
         return df
 
     def visualize(self, debug=False):
@@ -115,6 +115,7 @@ if __name__ == "__main__":
                         time_pair=("06:00", "23:00"))
     table1 = Table(name="Mercury", answer=AnswerFormData(
         answer={"2021-07-10": '7 : 00 -11 : 00, 14:30  ~ 21:00'}, **host_setting))
+    # table1.visualize(debug=True)
     table2 = Table(name="Venus", df=table1.df, answer=AnswerFormData(
         answer={"2021-07-10": '6 : 00 -6 : 45, 14:30  ~ 18:00'}, **host_setting))
     table3 = Table(name="Earth", df=table2.df, answer=AnswerFormData(
