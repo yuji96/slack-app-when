@@ -43,6 +43,7 @@ class Table:
         start = dt.datetime.combine(self.date_pair.start, self.time_pair.start)
         end = dt.datetime.combine(self.date_pair.end, self.time_pair.end)
 
+        # HACK: もしかして1枠多い？
         index = pd.date_range(start, end, freq=dt.timedelta(minutes=30))
         df = pd.DataFrame({self.name: False}, index=index)
         df.columns.set_names("name", inplace=True)
@@ -101,7 +102,7 @@ class Table:
         return self.update_df(pickle.loads(res.content))
 
     def upload(self, channels):
-        # TODO: 中間ファイルがないのが理想 import tempfile
+        # HACK: 中間ファイルがないのが理想 import tempfile
         self.df.to_pickle(f"{TMP_DIR}/table.pkl")
         res = self.client.files_upload(channels=channels, file=f"{TMP_DIR}/table.pkl")
         return res["file"]["id"]
