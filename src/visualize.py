@@ -59,6 +59,7 @@ class Table:
     def visualize(self, debug=False):
         # TODO: レイアウトの調整
         table = self.table
+        _, xticks_num = table.shape
         # w = len(table.columns)
         # figsize = np.array(table.T.shape) * 10.5 / w
         dates = table.index.get_level_values("date").unique()
@@ -71,11 +72,10 @@ class Table:
             g.set_title(date)
             g.set(xlabel=None, ylabel=None)
             g.tick_params(bottom=False, left=False, right=False, top=False)
-            # FIXME: remove magic number
-            g.set_xticks(range(35))
+            g.set_xticks(range(xticks_num))
             g.set_xticklabels(table.columns.map(lambda t: str(t.hour) if t.minute == 0 else ""),
                               rotation=0)
-            g.vlines(range(35)[::2], *g.get_ylim(), colors="k", lw=0.3)
+            g.vlines(range(xticks_num)[::2], *g.get_ylim(), colors="k", lw=0.3)
         plt.tight_layout()
         if debug:
             plt.show()
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt  # noqa
 
     host_setting = dict(date_pair=("2021-07-08", "2021-07-12"),
-                        time_pair=("06:00", "23:00"))
+                        time_pair=("06:00", "21:00"))
     table1 = Table(name="Mercury", answer=AnswerFormData(
         answer={"2021-07-10": '7 : 00 -11 : 00, 14:30  ~ 21:00'}, **host_setting))
     # table1.visualize(debug=True)
