@@ -69,13 +69,14 @@ class Table:
             g = sns.heatmap(table.loc[(date, slice(None))],
                             ax=ax, square=True,
                             cbar=False, cmap=["white", "lightblue", "lightgreen"], vmin=0, vmax=2,
-                            linecolor="grey", linewidths=0.2)
+                            linecolor="grey", linewidths=0.2, yticklabels=1)
             g.set_title(date)
             g.set(xlabel=None, ylabel=None)
             g.tick_params(bottom=False, left=False, right=False, top=False)
             g.set_xticks(range(xticks_num))
             g.set_xticklabels(table.columns.map(lambda t: str(t.hour) if t.minute == 0 else ""),
                               rotation=0)
+            g.set_yticklabels(g.get_ymajorticklabels(), fontsize=8)
             g.vlines(range(xticks_num)[::2], *g.get_ylim(), colors="k", lw=0.3)
         plt.tight_layout()
         if debug:
@@ -121,4 +122,8 @@ if __name__ == "__main__":
         answer={"2021-07-10": '6 : 00 -6 : 45, 14:30  ~ 18:00'}, **host_setting))
     table3 = Table(name="Earth", df=table2.df, answer=AnswerFormData(
         answer={"2021-07-10": '6 : 30 -8 : 50, 12:00  ~ 15:00'}, **host_setting))
-    table3.visualize(debug=True)
+    table4 = Table(name="Mars", df=table3.df, answer=AnswerFormData(
+        answer={"2021-07-10": '6 : 30 -8 : 50, 12:00  ~ 15:00'}, **host_setting))
+    table5 = Table(name="Mars", df=table4.df, answer=AnswerFormData(
+        answer={"2021-07-10": '6 : 30 -8 : 50, 12:00  ~ 15:00'}, **host_setting))
+    table5.visualize(debug=True)
