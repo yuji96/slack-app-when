@@ -1,4 +1,10 @@
-# Manager-to-Participants
+# When
+
+日程調整用の Slack アプリ。
+
+![](./docs/sample.png)
+
+詳細は [wiki](https://github.com/yuji96/slack-app-when/wiki) を参照してください。
 
 ## setup (for Mac)
 ```zsh
